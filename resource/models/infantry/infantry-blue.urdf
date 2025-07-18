@@ -5,6 +5,47 @@ Stephen Brawner (brawner@gmail.com)
      For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
 <robot
     name="infantry">
+
+    <link name="root">
+        <inertial>
+            <mass value="0" />
+            <inertia ixx="0.00" ixy="0.00" ixz="0.00" iyy="0.00" iyz="0.00" izz="0.00" />
+        </inertial>
+    </link>
+    <link name="root_base_1_link_1">
+        <inertial>
+            <mass value="0" />
+            <inertia ixx="0.00" ixy="0.00" ixz="0.00" iyy="0.00" iyz="0.00" izz="0.00" />
+        </inertial>
+    </link>
+    <link name="root_base_1_link_2">
+        <inertial>
+            <mass value="0" />
+            <inertia ixx="0.00" ixy="0.00" ixz="0.00" iyy="0.00" iyz="0.00" izz="0.00" />
+        </inertial>
+    </link>
+    <joint name="root_x_axis_joint" type="prismatic">
+        <parent link="root" />
+        <child link="root_base_1_link_1" />
+        <axis xyz="1 0 0" />
+        <limit effort="100" lower="-20" upper="20" velocity="0.50" />
+        <dynamics damping="10.0" friction="10" />
+    </joint>
+    <joint name="root_z_axis_joint" type="prismatic">
+        <parent link="root_base_1_link_1" />
+        <child link="root_base_1_link_2" />
+        <axis xyz="0 0 1" />
+        <limit effort="100" lower="-20" upper="20" velocity="0.50" />
+        <dynamics damping="10.0" friction="10" />
+    </joint>
+    <joint name="root_y_rotation_joint" type="continuous">
+        <parent link="root_base_1_link_2" />
+        <child link="base_link" />
+        <axis xyz="0 1 0" />
+        <dynamics damping="10.0" friction="1" />
+    </joint>
+
+
     <link
         name="base_link">
         <inertial>

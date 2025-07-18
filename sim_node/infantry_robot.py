@@ -22,6 +22,11 @@ class InfantryRobot(BaseAgent):
 
     pitch_joint_names = ["pitch_joint"]
     yaw_joint_names = ["yaw_joint"]
+    base_joint_names = [
+        "root_x_axis_joint",
+        "root_z_axis_joint",
+        "root_y_rotation_joint",
+    ]
 
     @property
     def _controller_configs(self):
@@ -46,8 +51,18 @@ class InfantryRobot(BaseAgent):
             normalize_action=False,
         )
 
+        base_pd_joint_vel = PDBaseForwardVelControllerConfig(
+            self.base_joint_names,
+            lower=[-1, -3.14],
+            upper=[1, 3.14],
+            damping=1000,
+            force_limit=500,
+        )
+
         controller_configs = dict(
-            pd_standard=dict(pitch=pitch_pd_joint, yaw=yaw_pd_joint)
+            pd_standard=dict(
+                pitch=pitch_pd_joint, yaw=yaw_pd_joint, base=base_pd_joint_vel
+            )
         )
 
         return deepcopy_dict(controller_configs)
