@@ -46,6 +46,6 @@ setup(
     license="TODO: License declaration",
     tests_require=["pytest"],
     entry_points={
-        "console_scripts": ["sim_node = sim_node.sim_node:main"],
+        "console_scripts": ["sim_node = sim_node.ros_bridge:main"],
     },
 )
