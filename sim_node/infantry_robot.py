@@ -72,13 +72,13 @@ class InfantryRobot(BaseAgent):
         return [
             CameraConfig(
                 uid="cv_camera",
-                pose=sapien.Pose(p=[0, 0, 0], q=[1, 0, 0, 0]),
+                pose=sapien.Pose(p=[0, 0, 0], q=[0.5, -0.5, -0.5, -0.5]),
                 width=1920,
                 height=1200,
                 fov=90,
                 near=0.01,
                 far=100,
                 mount=self.robot.links_map["camera_link"],
-                shader_pack="rt-fast",
+                shader_pack="default",
             )
         ]
