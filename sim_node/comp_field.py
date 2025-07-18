@@ -7,7 +7,7 @@ import os
 from sim_node import infantry_robot
 
 package_dir = get_package_share_directory("sim_node")
-urdf_path = os.path.join(package_dir, "resource/models/arena/arena.urdf")
+urdf_path = os.path.join(package_dir, "resource/models/RMNA_field/RMNA_field.urdf")
 
 
 @register_env("comp_field")
