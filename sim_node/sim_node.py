@@ -17,7 +17,7 @@ done = False
 
 while not done:
     action = env.action_space.sample()  # Take random actions
-    obs, reward, terminated, truncated, info = env.step(action)
+    obs, reward, terminated, truncated, info = env.step(None)
     done = terminated or truncated
     env.render()
 
