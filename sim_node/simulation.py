@@ -9,6 +9,7 @@ class Simulation:
             "comp_field",  # This should map to your registered environment
             render_mode="human",  # Use "human" to visualize, or "rgb_array" to render frames without GUI
             reward_mode="sparse",
+            obs_mode="pointcloud",
         )
 
         obs, _ = self.env.reset(seed=seed)  # Reset and get the initial observation
@@ -20,6 +21,7 @@ class Simulation:
         obs, reward, terminated, truncated, info = self.env.step(None)
         done = terminated or truncated
         self.env.render()
+        return obs
 
     def shutdown(self):
         self.env.close()
