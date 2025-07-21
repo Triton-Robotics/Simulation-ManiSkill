@@ -5,9 +5,30 @@ from mani_skill.utils.registration import register_env
 from ament_index_python import get_package_share_directory
 import os
 from sim_node import infantry_robot
+import numpy as np
 
 package_dir = get_package_share_directory("sim_node")
-urdf_path = os.path.join(package_dir, "resource/models/RMNA_field/RMNA_field.urdf")
+base_field_path = "resource/models/field/"
+
+urdf_path_and_names = [
+    ("RMNAFullField", base_field_path + "RMNAFullField/RMNAFullField.urdf", False),
+    (
+        "FieldSideLongWall",
+        base_field_path + "FieldSideLongWall/FieldSideLongWall.urdf",
+        True,
+    ),
+    (
+        "FieldSideShortWall",
+        base_field_path + "FieldSideShortWall/FieldSideShortWall.urdf",
+        True,
+    ),
+    ("Floor", base_field_path + "Floor/Floor.urdf", False),
+    ("LargeBarrier", base_field_path + "LargeBarrier/LargeBarrier.urdf", True),
+    ("MiddleBarrier", base_field_path + "MiddleBarrier/MiddleBarrier.urdf", True),
+    ("Ramp", base_field_path + "Ramp/Ramp.urdf", True),
+    ("SmallPlatform", base_field_path + "SmallPlatform/SmallPlatform.urdf", True),
+    ("BigPlatform", base_field_path + "BigPlatform/BigPlatform.urdf", True),
+]
 
 
 @register_env("comp_field")
@@ -25,10 +46,22 @@ class CompFieldEnv(BaseEnv):
 
     def _load_scene(self, options: dict):
         loader = self.scene.create_urdf_loader()
-        actor_builders = loader.parse(str(urdf_path))["actor_builders"]
-        # print(builders)
-        builder = actor_builders[0]
+        for name, path, load_flipped_copy in urdf_path_and_names:
+            full_urdf_path = os.path.join(package_dir, path)
+            actor_builders = loader.parse(str(full_urdf_path))["actor_builders"]
+            builder = actor_builders[0]
+            builder.set_physx_body_type("static")
+            builder.initial_pose = sapien.Pose(p=[0, 0, 0])
+            origional_actor = builder.build(name=name)
 
-        builder.initial_pose = sapien.Pose(p=[0, 0, 0])
-        builder.set_physx_body_type("static")
-        builder.build(name="comp_field")
+            if load_flipped_copy:
+                actor_builders = loader.parse(str(full_urdf_path))["actor_builders"]
+                builder = actor_builders[0]
+                builder.set_physx_body_type("static")
+
+                # calculate flipped pose
+                mesh = origional_actor.get_first_collision_mesh(to_world_frame=True)
+                pos = mesh.centroid
+                flipped_pos = [-2 * pos[0], -2 * pos[1], 0]
+                builder.initial_pose = sapien.Pose(p=flipped_pos)
+                builder.build(name=(name + "_flipped"))

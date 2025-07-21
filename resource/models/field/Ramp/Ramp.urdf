@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="Ramp">
+    <link name="Component4">
+        <collision name="Component4_collision">
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+            <geometry>
+                <mesh filename="meshes/Component4.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </collision>
+    </link>
+</robot>
