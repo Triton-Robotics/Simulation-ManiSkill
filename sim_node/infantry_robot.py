@@ -17,7 +17,7 @@ class InfantryRobot(BaseAgent):
         os.path.join(package_dir, "resource/models/infantry/infantry-blue.urdf")
     )
     keyframes = dict(
-        default=Keyframe(pose=sapien.Pose(p=[1, 1, 0.5], q=[0.707, 0.707, 0, 0]))
+        default=Keyframe(pose=sapien.Pose(p=[1, 1, 0.25], q=[0.707, 0.707, 0, 0]))
     )
 
     pitch_joint_names = ["pitch_joint"]
