@@ -51,10 +51,10 @@ class InfantryRobot(BaseAgent):
             normalize_action=False,
         )
 
-        base_pd_joint_vel = PDBaseForwardVelControllerConfig(
+        base_pd_joint_vel = PDBaseVelControllerConfig(
             self.base_joint_names,
-            lower=[-1, -3.14],
-            upper=[1, 3.14],
+            lower=[-1, -1, -3.14],
+            upper=[1, 1, 3.14],
             damping=1000,
             force_limit=500,
         )
