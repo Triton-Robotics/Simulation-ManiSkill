@@ -1,6 +1,7 @@
 import gymnasium as gym
 import mani_skill.envs
 from sim_node import comp_field
+import numpy as np
 
 
 class Simulation:
@@ -9,7 +10,7 @@ class Simulation:
             "comp_field",  # This should map to your registered environment
             render_mode="human",  # Use "human" to visualize, or "rgb_array" to render frames without GUI
             reward_mode="sparse",
-            obs_mode="pointcloud",
+            obs_mode="rgb+segmentation+position",
         )
 
         obs, _ = self.env.reset(seed=seed)  # Reset and get the initial observation
@@ -18,6 +19,7 @@ class Simulation:
 
     def step(self):
         action = self.env.action_space.sample()  # Take random actions
+        action_test = np.array([0, 0, 0, 0, 0.0])
         obs, reward, terminated, truncated, info = self.env.step(None)
         done = terminated or truncated
         self.env.render()

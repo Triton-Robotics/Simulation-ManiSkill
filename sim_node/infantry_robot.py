@@ -71,10 +71,10 @@ class InfantryRobot(BaseAgent):
     def _sensor_configs(self):
         return [
             CameraConfig(
-                uid="cv_camera",
+                uid="cv_camera_lidar",
                 pose=sapien.Pose(p=[0, 0, 0], q=[0.5, -0.5, -0.5, -0.5]),
-                width=50,
-                height=50,
+                width=1920,
+                height=1200,
                 fov=90,
                 near=0.01,
                 far=100,

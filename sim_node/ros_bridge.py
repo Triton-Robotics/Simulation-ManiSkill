@@ -8,6 +8,14 @@ from sim_node import simulation
 from sensor_msgs.msg import PointCloud2, PointField
 from std_msgs.msg import Header
 from sensor_msgs_py import point_cloud2  # pointcloud utilizes
+from sim_node import utils
+import numpy as np
+
+# TODO:
+# add launch files for camera and lidar scenario for sim
+# add lidar support
+# write and listen services working with the action space
+# write keyboard control node that calls write service
 
 
 class Sim_Node(Node):
@@ -25,14 +33,33 @@ class Sim_Node(Node):
         self.simulation = simulation.Simulation()
 
     def simulation_callback(self):
+        start = time.time()
+        t1 = time.time()
         obs = self.simulation.step()
-        xyzw = obs["pointcloud"]["xyzw"]
-        print("shape", xyzw.shape)
+        t2 = time.time()
+        print("step sim: ", (t2 - t1) * 1000, "ms")
+
+        t1 = time.time()
+        pointcloud = utils.sensor_data_to_pointcloud(obs)
+        t2 = time.time()
+        print("raw to pointcloud: ", (t2 - t1) * 1000, "ms")
+
+        t1 = time.time()
+        xyzw = pointcloud["xyzw"]
         xyzw = xyzw.squeeze(0)
         valid_mask = xyzw[:, 3] == 1
         points = xyzw[valid_mask, :3]
         msg = self.points_to_ros_pointcloud2(points)
+        t2 = time.time()
+        print("pointcloud to ros: ", (t2 - t1) * 1000, "ms")
+
+        t1 = time.time()
         self.image_pub.publish(msg)
+        t2 = time.time()
+        print("publishing: ", (t2 - t1) * 1000, "ms")
+
+        end = time.time()
+        print("time taken: ", (end - start) * 1000, "ms\n---\n")
 
     def write_robot_state(self, request, response):
         a = 1
@@ -67,7 +94,7 @@ class Sim_Node(Node):
         field_z.count = 1
 
         fields = [field_x, field_y, field_z]
-        point_iter = points.tolist()
+        point_iter = points.cpu().numpy()
 
         pc2_msg = point_cloud2.create_cloud(header, fields, point_iter)
         return pc2_msg
