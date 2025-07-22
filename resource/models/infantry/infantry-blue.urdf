@@ -77,7 +77,7 @@ Stephen Brawner (brawner@gmail.com)
                     rgba="0.984 0.737 0.020 1" />
             </material>
         </visual>
-        <collision>
+        <!-- <collision>
             <origin
                 xyz="0 0 0"
                 rpy="0 0 0" />
@@ -85,7 +85,7 @@ Stephen Brawner (brawner@gmail.com)
                 <mesh
                     filename="package://infantry/meshes/base_link.STL" />
             </geometry>
-        </collision>
+        </collision> -->
     </link>
     <link
         name="mount_link">
@@ -117,7 +117,7 @@ Stephen Brawner (brawner@gmail.com)
                     rgba="0.79216 0.81961 0.93333 1" />
             </material>
         </visual>
-        <collision>
+        <!-- <collision>
             <origin
                 xyz="0 0 0"
                 rpy="0 0 0" />
@@ -125,7 +125,7 @@ Stephen Brawner (brawner@gmail.com)
                 <mesh
                     filename="package://infantry/meshes/mount_link.STL" />
             </geometry>
-        </collision>
+        </collision> -->
     </link>
     <joint
         name="yaw_joint"
@@ -170,7 +170,7 @@ Stephen Brawner (brawner@gmail.com)
                     rgba="0.79216 0.81961 0.93333 1" />
             </material>
         </visual>
-        <collision>
+        <!-- <collision>
             <origin
                 xyz="0 0 0"
                 rpy="0 0 0" />
@@ -178,7 +178,7 @@ Stephen Brawner (brawner@gmail.com)
                 <mesh
                     filename="package://infantry/meshes/turret_link.STL" />
             </geometry>
-        </collision>
+        </collision> -->
     </link>
     <joint
         name="pitch_joint"
@@ -245,7 +245,7 @@ Stephen Brawner (brawner@gmail.com)
                     rgba="0 0 0 1" />
             </material>
         </visual>
-        <collision>
+        <!-- <collision>
             <origin
                 xyz="0 0 0"
                 rpy="0 0 0" />
@@ -253,7 +253,7 @@ Stephen Brawner (brawner@gmail.com)
                 <mesh
                     filename="package://infantry/meshes/plates_link.STL" />
             </geometry>
-        </collision>
+        </collision> -->
     </link>
     <joint
         name="plates_joint"
@@ -298,7 +298,7 @@ Stephen Brawner (brawner@gmail.com)
                     rgba="0 0 1 1" />
             </material>
         </visual>
-        <collision>
+        <!-- <collision>
             <origin
                 xyz="0 0 0"
                 rpy="0 0 0" />
@@ -306,7 +306,7 @@ Stephen Brawner (brawner@gmail.com)
                 <mesh
                     filename="package://infantry/meshes/lightbars_link.STL" />
             </geometry>
-        </collision>
+        </collision> -->
     </link>
     <joint
         name="lightbars_joint"
@@ -351,7 +351,7 @@ Stephen Brawner (brawner@gmail.com)
                     rgba="1 1 1 1" />
             </material>
         </visual> -->
-        <collision>
+        <!-- <collision>
             <origin
                 xyz="0 0 0"
                 rpy="0 0 0" />
@@ -359,7 +359,7 @@ Stephen Brawner (brawner@gmail.com)
                 <mesh
                     filename="package://infantry/meshes/numbers_link.STL" />
             </geometry>
-        </collision>
+        </collision> -->
     </link>
     <joint
         name="numbers_joint"
