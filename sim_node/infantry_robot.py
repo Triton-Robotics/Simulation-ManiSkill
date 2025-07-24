@@ -29,6 +29,20 @@ class InfantryRobot(BaseAgent):
         "root_y_rotation_joint",
     ]
 
+    def _after_init(self):
+        super()._after_init()
+
+        # make light bars glow in rt rendering mode
+        lightbar_link = self.robot.links_map["lightbars_link"]
+        visual_block = lightbar_link.render_shapes[0]
+        for shape in visual_block:
+            for part in shape.parts:
+                part.material.set_base_color([0, 0, 0.1, 1])
+                part.material.set_emission([0, 0, 100, 100])
+                part.material.set_emission_texture(None)
+                part.material.set_metallic_texture(None)
+                part.material.set_roughness_texture(None)
+
     @property
     def _controller_configs(self):
 
