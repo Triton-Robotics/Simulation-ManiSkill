@@ -32,7 +32,6 @@ def sensor_data_to_pointcloud(observation: Dict):
 
             # Convert to world space
             cam2world = camera_params[cam_uid]["cam2world_gl"].to(position.device)
-            print(position.device)
             xyzw = torch.cat([position, segmentation != 0], dim=-1).reshape(
                 position.shape[0], -1, 4
             ) @ cam2world.transpose(1, 2)
