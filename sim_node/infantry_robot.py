@@ -70,31 +70,10 @@ class InfantryRobot(BaseAgent):
 
     @property
     def _sensor_configs(self):
-        q_test = [0.6533, -0.2706, -0.6533, -0.2706]
-        pose = sapien.Pose(p=[0, 0.2, 0], q=[1, 0, 0, 0])
-        dtr = 3.1415 / 180.0
-        pose.set_rpy([0, -45 * dtr, 0])
 
-        pose2 = sapien.Pose(p=[0, 0.2, 0], q=[1, 0, 0, 0])
-        pose2.set_rpy([0, -45 * dtr, -90 * dtr])
-
-        pose3 = sapien.Pose(p=[0, 0.2, 0], q=[1, 0, 0, 0])
-        pose3.set_rpy([0, -45 * dtr, -180 * dtr])
-
-        pose4 = sapien.Pose(p=[0, 0.2, 0], q=[1, 0, 0, 0])
-        pose4.set_rpy([0, -45 * dtr, -270 * dtr])
-
-        width = 200
-        height = 200
-
-        instincts = np.array(
-            [
-                [0.5 * width, 0.0, 0.5 * width],
-                [0.0, 0.5 * height, 0.5 * height],
-                [0.0, 0.0, 1.0],
-            ]
-        )
-        return [
+        sensors = []
+        # CV camera sensor
+        sensors.append(
             CameraConfig(
                 uid="cv_camera",
                 pose=sapien.Pose(p=[0, 0, 0], q=[0.5, -0.5, -0.5, -0.5]),
@@ -105,49 +84,88 @@ class InfantryRobot(BaseAgent):
                 far=100,
                 mount=self.robot.links_map["camera_link"],
                 shader_pack="minimal",
-            ),
+            )
+        )
+
+        # lidar simulated with multiple camera sensors
+        lidar_pose = [0, 0.2, 0]
+        pose0 = sapien.Pose(lidar_pose)
+        # left cam
+        pose0.set_rpy([0, np.deg2rad(-45), 0])
+
+        # bottom cam
+        pose1 = sapien.Pose(lidar_pose)
+        pose1.set_rpy([0, np.deg2rad(-45), np.deg2rad(-90)])
+
+        # right cam
+        pose2 = sapien.Pose(lidar_pose)
+        pose2.set_rpy([0, np.deg2rad(-45), np.deg2rad(-180)])
+
+        # top cam
+        pose3 = sapien.Pose(lidar_pose)
+        pose3.set_rpy([0, np.deg2rad(-45), np.deg2rad(-270)])
+
+        lidar_width_resolution = 200
+        lidar_height_resolution = 200
+
+        lidar_camera_intrinsics = np.array(
+            [
+                [0.5 * lidar_width_resolution, 0.0, 0.5 * lidar_width_resolution],
+                [0.0, 0.5 * lidar_height_resolution, 0.5 * lidar_height_resolution],
+                [0.0, 0.0, 1.0],
+            ]
+        )
+        sensors.append(
             CameraConfig(
-                uid="lidar_1",
-                pose=pose,
-                width=200,
-                height=200,
-                intrinsic=instincts,
+                uid="lidar_0",
+                pose=pose0,
+                width=lidar_width_resolution,
+                height=lidar_height_resolution,
+                intrinsic=lidar_camera_intrinsics,
                 near=0.01,
                 far=100,
                 mount=self.robot.links_map["camera_link"],
                 shader_pack="minimal",
-            ),
+            )
+        )
+        sensors.append(
+            CameraConfig(
+                uid="lidar_1",
+                pose=pose1,
+                width=lidar_width_resolution,
+                height=lidar_height_resolution,
+                intrinsic=lidar_camera_intrinsics,
+                near=0.01,
+                far=100,
+                mount=self.robot.links_map["camera_link"],
+                shader_pack="minimal",
+            )
+        )
+        sensors.append(
             CameraConfig(
                 uid="lidar_2",
                 pose=pose2,
-                width=200,
-                height=200,
-                intrinsic=instincts,
+                width=lidar_width_resolution,
+                height=lidar_height_resolution,
+                intrinsic=lidar_camera_intrinsics,
                 near=0.01,
                 far=100,
                 mount=self.robot.links_map["camera_link"],
                 shader_pack="minimal",
-            ),
+            )
+        )
+        sensors.append(
             CameraConfig(
                 uid="lidar_3",
                 pose=pose3,
-                width=200,
-                height=200,
-                intrinsic=instincts,
+                width=lidar_width_resolution,
+                height=lidar_height_resolution,
+                intrinsic=lidar_camera_intrinsics,
                 near=0.01,
                 far=100,
                 mount=self.robot.links_map["camera_link"],
                 shader_pack="minimal",
-            ),
-            # CameraConfig(
-            #     uid="lidar_4",
-            #     pose=pose4,
-            #     width=200,
-            #     height=200,
-            #     intrinsic=instincts,
-            #     near=0.01,
-            #     far=100,
-            #     mount=self.robot.links_map["camera_link"],
-            #     shader_pack="minimal",
-            # ),
-        ]
+            )
+        )
+
+        return sensors
