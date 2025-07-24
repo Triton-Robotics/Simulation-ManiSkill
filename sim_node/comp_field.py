@@ -40,10 +40,13 @@ class CompFieldEnv(BaseEnv):
 
     def _load_agent(self, options: dict):
         # set a reasonable initial pose for the agent that doesn't intersect other objects
-        options
         super()._load_agent(
             options, [sapien.Pose(p=[1, 1, 1]), sapien.Pose(p=[1, 5, 3])]
         )
+
+    def _load_lighting(self, options: dict):
+        # self.scene.set_ambient_light([0.05, 0.05, 0.05])
+        return super()._load_lighting(options)
 
     def _load_scene(self, options: dict):
         field_visual_builder = self.scene.create_actor_builder()
