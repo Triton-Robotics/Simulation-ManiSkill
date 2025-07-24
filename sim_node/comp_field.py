@@ -10,8 +10,9 @@ import numpy as np
 package_dir = get_package_share_directory("sim_node")
 base_field_path = "resource/models/field/"
 
+full_field_visual_gltf_path = package_dir + "/resource/models/field.gltf"
+
 urdf_path_and_names = [
-    ("RMNAFullField", base_field_path + "RMNAFullField/RMNAFullField.urdf", False),
     (
         "FieldSideLongWall",
         base_field_path + "FieldSideLongWall/FieldSideLongWall.urdf",
@@ -45,6 +46,12 @@ class CompFieldEnv(BaseEnv):
         )
 
     def _load_scene(self, options: dict):
+        field_visual_builder = self.scene.create_actor_builder()
+
+        field_visual_builder.add_visual_from_file(filename=full_field_visual_gltf_path)
+        field_visual_builder.initial_pose = sapien.Pose()
+        field_visual_builder.build_static(name="full_field_visual")
+
         loader = self.scene.create_urdf_loader()
         for name, path, load_flipped_copy in urdf_path_and_names:
             full_urdf_path = os.path.join(package_dir, path)
