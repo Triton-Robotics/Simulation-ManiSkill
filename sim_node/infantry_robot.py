@@ -16,8 +16,12 @@ class InfantryRobot(BaseAgent):
     urdf_path = str(
         os.path.join(package_dir, "resource/models/infantry/infantry-blue.urdf")
     )
+
+    default_pos = sapien.Pose(p=[0, 0, 0.25], q=[1, 0, 0, 0])
+    default_pos.set_rpy([np.deg2rad(90), 0, np.deg2rad(180)])
+
     keyframes = dict(
-        default=Keyframe(pose=sapien.Pose(p=[1, 1, 0.25], q=[0.707, 0.707, 0, 0]))
+        default=Keyframe(pose=default_pos)
         # default=Keyframe(pose=sapien.Pose(p=[0, 0, 1.0], q=[1, 0, 0, 0]))
     )
 
@@ -76,7 +80,11 @@ class InfantryRobot(BaseAgent):
 
         controller_configs = dict(
             pd_standard=dict(
-                pitch=pitch_pd_joint, yaw=yaw_pd_joint, base=base_pd_joint_vel
+                # order matters. determines the order of the action space
+                # this is set to match the URDF
+                base=base_pd_joint_vel,
+                yaw=yaw_pd_joint,
+                pitch=pitch_pd_joint,
             )
         )
 

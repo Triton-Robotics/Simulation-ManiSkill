@@ -9,6 +9,16 @@ from mani_skill.sensors.camera import Camera
 from mani_skill.utils import common
 
 
+class robot_state:
+    def __init__(
+        self, pitch: float = 0, yaw: float = 0, x_vel: float = 0, y_vel: float = 0
+    ) -> None:
+        self.pitch = pitch
+        self.yaw = yaw
+        self.x_vel = x_vel
+        self.y_vel = y_vel
+
+
 def sensor_data_to_pointcloud(observation: Dict):
     """convert all camera data in sensor to pointcloud data"""
     sensor_data = observation["sensor_data"]

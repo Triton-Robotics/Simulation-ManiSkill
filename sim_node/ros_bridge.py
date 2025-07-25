@@ -32,13 +32,16 @@ class Sim_Node(Node):
         self.simulation_timer = self.create_timer(0.01, self.simulation_callback)
         self.simulation = simulation.Simulation()
 
+        self.desired_robot_state = utils.robot_state()
+
     def simulation_callback(self):
         start = time.time()
         t1 = time.time()
-        obs = self.simulation.step()
+        obs = self.simulation.step(self.desired_robot_state)
         t2 = time.time()
         print("step sim: ", (t2 - t1) * 1000, "ms")
 
+        # Todo fix crash for when no lidar cameras are defined
         t1 = time.time()
         pointcloud = utils.sensor_data_to_pointcloud(obs)
         t2 = time.time()
@@ -59,10 +62,16 @@ class Sim_Node(Node):
         print("publishing: ", (t2 - t1) * 1000, "ms")
 
         end = time.time()
+        print("fps (theoretical): ", 1 / (end - start))
         print("time taken: ", (end - start) * 1000, "ms\n---\n")
 
     def write_robot_state(self, request, response):
-        a = 1
+        self.desired_robot_state = utils.robot_state(
+            request.pitch, request.yaw, request.x_vel, request.y_vel
+        )
+
+        response.success = True
+        return response
 
     def read_robot_state(self, request, response):
         # add filter like in stm32 bridge to get position a specific time
