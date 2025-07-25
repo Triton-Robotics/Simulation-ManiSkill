@@ -69,9 +69,10 @@ class CompFieldEnv(BaseEnv):
                 builder = actor_builders[0]
                 builder.set_physx_body_type("static")
 
-                # calculate flipped pose
-                mesh = origional_actor.get_first_collision_mesh(to_world_frame=True)
-                pos = mesh.centroid
-                flipped_pos = [-2 * pos[0], -2 * pos[1], 0]
-                builder.initial_pose = sapien.Pose(p=flipped_pos)
+                # position is defined in the STL. So when we pass a quaternion that is a 180 rotation
+                # about the z axis it rotates the object around the origin (defined in the STL)
+                # which correctly positions and orients the object
+                flipped_pos = [0, 0, 0]
+                q_rotate_180_z_axis = [0, 0, 0, 1]
+                builder.initial_pose = sapien.Pose(p=flipped_pos, q=q_rotate_180_z_axis)
                 builder.build(name=(name + "_flipped"))
