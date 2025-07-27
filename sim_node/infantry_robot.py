@@ -96,13 +96,22 @@ class InfantryRobot(BaseAgent):
 
         sensors = []
         # CV camera sensor
+        width = 1920
+        height = 1200
+        horizontal_fov = 31
+        vertical_fov = 20
+        f_x = width / (2 * np.tan(np.radians(horizontal_fov) / 2))
+        f_y = height / (2 * np.tan(np.radians(vertical_fov) / 2))
+        c_x = width / 2
+        c_y = height / 2
+        cv_camera_intrinsics = np.array([[f_x, 0, c_x], [0, f_y, c_y], [0, 0, 1]])
         sensors.append(
             CameraConfig(
                 uid="cv_camera",
                 pose=sapien.Pose(p=[0, 0, 0], q=[0.5, -0.5, -0.5, -0.5]),
-                width=1920,
-                height=1200,
-                fov=90,
+                width=width,
+                height=height,
+                intrinsic=cv_camera_intrinsics,
                 near=0.01,
                 far=100,
                 mount=self.robot.links_map["camera_link"],

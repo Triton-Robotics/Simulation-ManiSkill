@@ -5,34 +5,37 @@ from tr_messages.srv import WriteSerial, ListenSerial
 from sensor_msgs.msg import Image
 from sim_node import simulation
 
-from sensor_msgs.msg import PointCloud2, PointField
+from sensor_msgs.msg import Image, PointCloud2, PointField
 from std_msgs.msg import Header
 from sensor_msgs_py import point_cloud2  # pointcloud utilizes
 from sim_node import utils
 import numpy as np
 
-# TODO:
-# add launch files for camera and lidar scenario for sim
-# add lidar support
-# write and listen services working with the action space
-# write keyboard control node that calls write service
+from cv_bridge import CvBridge
+import torch
 
 
 class Sim_Node(Node):
     def __init__(self):
         super().__init__("sim_node")
+
         self.write_service = self.create_service(
             WriteSerial, "write_robot_state", self.write_robot_state
         )
         self.listen_service = self.create_service(
             ListenSerial, "read_robot_state", self.read_robot_state
         )
-        self.image_pub = self.create_publisher(PointCloud2, "pointcloud", 10)
+        self.pointcloud_pub = self.create_publisher(PointCloud2, "pointcloud", 10)
+        qos_profile = rclpy.qos.qos_profile_sensor_data
+        qos_profile.depth = 1
+        self.image_pub = self.create_publisher(Image, "camera/image", qos_profile)
         # 10ms
         self.simulation_timer = self.create_timer(0.01, self.simulation_callback)
         self.simulation = simulation.Simulation()
 
         self.desired_robot_state = utils.robot_state()
+
+        self.cv_bridge = CvBridge()
 
     def simulation_callback(self):
         start = time.time()
@@ -40,6 +43,23 @@ class Sim_Node(Node):
         obs = self.simulation.step(self.desired_robot_state)
         t2 = time.time()
         print("step sim: ", (t2 - t1) * 1000, "ms")
+
+        if "cv_camera" in obs["sensor_data"]:
+            t1 = time.time()
+            rgb_tensor = obs["sensor_data"]["cv_camera"]["rgb"]
+            rgb_tensor: torch.Tensor
+            rgb_tensor = rgb_tensor.squeeze(0)  # remove batch dimension
+
+            rgb_array = rgb_tensor.numpy(force=True)
+            img_msg = self.cv_bridge.cv2_to_imgmsg(rgb_array, encoding="rgb8")
+            img_msg.header.stamp = self.get_clock().now().to_msg()
+            t2 = time.time()
+            print("cv process img: ", (t2 - t1) * 1000, "ms")
+
+            t1 = time.time()
+            self.image_pub.publish(img_msg)
+            t2 = time.time()
+            print("cv pub: ", (t2 - t1) * 1000, "ms")
 
         # Todo fix crash for when no lidar cameras are defined
         t1 = time.time()
@@ -57,7 +77,7 @@ class Sim_Node(Node):
         print("pointcloud to ros: ", (t2 - t1) * 1000, "ms")
 
         t1 = time.time()
-        self.image_pub.publish(msg)
+        self.pointcloud_pub.publish(msg)
         t2 = time.time()
         print("publishing: ", (t2 - t1) * 1000, "ms")
 
