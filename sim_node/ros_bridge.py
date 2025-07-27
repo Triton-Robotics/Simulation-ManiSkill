@@ -67,7 +67,11 @@ class Sim_Node(Node):
 
     def write_robot_state(self, request, response):
         self.desired_robot_state = utils.robot_state(
-            request.pitch, request.yaw, request.x_vel, request.y_vel
+            request.pitch,
+            request.yaw,
+            request.x_vel,
+            request.y_vel,
+            request.angular_vel,
         )
 
         response.success = True

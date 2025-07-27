@@ -35,10 +35,9 @@ class Simulation:
 
         action = np.array(
             [
-                # opposite indexes because I have been given robot cadd with y axis up and this is now my life
-                world_relative_vel[1],
                 world_relative_vel[0],
-                0,
+                world_relative_vel[1],
+                desired_robot_state.angular_vel,
                 desired_robot_state.yaw,
                 desired_robot_state.pitch,
             ]
@@ -56,7 +55,6 @@ class Simulation:
 
     def local_to_world_vel(self, x_vel, y_vel):
         yaw_rads = self.past_obs["agent"]["qpos"][0][3].item()
-
         rotation_matrix = np.array(
             [
                 [np.cos(yaw_rads), -np.sin(yaw_rads)],
@@ -66,9 +64,5 @@ class Simulation:
 
         head_relative_vel = np.array([x_vel, y_vel])
         world_relative_vel = rotation_matrix @ head_relative_vel
-
-        print(
-            f"{yaw_rads:.3f},{x_vel:.3f},{y_vel:.3f},{world_relative_vel[0]:.3f},{world_relative_vel[1]:.3f}"
-        )
 
         return world_relative_vel

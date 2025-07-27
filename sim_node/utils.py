@@ -11,12 +11,18 @@ from mani_skill.utils import common
 
 class robot_state:
     def __init__(
-        self, pitch: float = 0, yaw: float = 0, x_vel: float = 0, y_vel: float = 0
+        self,
+        pitch: float = 0,
+        yaw: float = 0,
+        x_vel: float = 0,
+        y_vel: float = 0,
+        angular_vel: float = 0,
     ) -> None:
         self.pitch = pitch
         self.yaw = yaw
         self.x_vel = x_vel
         self.y_vel = y_vel
+        self.angular_vel = angular_vel
 
 
 def sensor_data_to_pointcloud(observation: Dict):

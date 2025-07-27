@@ -28,8 +28,9 @@ class InfantryRobot(BaseAgent):
     pitch_joint_names = ["pitch_joint"]
     yaw_joint_names = ["yaw_joint"]
     base_joint_names = [
-        "root_x_axis_joint",
+        # weird ordering because y axis up cadd
         "root_z_axis_joint",
+        "root_x_axis_joint",
         "root_y_rotation_joint",
     ]
 
