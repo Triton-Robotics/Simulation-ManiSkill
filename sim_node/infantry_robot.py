@@ -128,8 +128,8 @@ class InfantryRobot(BaseAgent):
         pose3 = sapien.Pose(lidar_pose)
         pose3.set_rpy([0, np.deg2rad(-45), np.deg2rad(-270)])
 
-        lidar_width_resolution = 200
-        lidar_height_resolution = 200
+        lidar_width_resolution = 20
+        lidar_height_resolution = 20
 
         lidar_camera_intrinsics = np.array(
             [
