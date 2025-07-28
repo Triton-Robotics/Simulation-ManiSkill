@@ -85,7 +85,7 @@ class Sim_Node(Node):
 
         if self.get_parameter("enable_cv_camera").get_parameter_value().bool_value:
             t1 = time.time()
-            rgb_tensor = obs["sensor_data"]["cv_camera"]["rgb"]
+            rgb_tensor = obs["sensor_data"]["cv_camera_0"]["rgb"]
             rgb_tensor: torch.Tensor
             rgb_tensor = rgb_tensor.squeeze(0)  # remove batch dimension
 
