@@ -25,17 +25,17 @@ Stephen Brawner (brawner@gmail.com)
             <inertia ixx="0.00" ixy="0.00" ixz="0.00" iyy="0.00" iyz="0.00" izz="0.00" />
         </inertial>
     </link>
-    <joint name="root_x_axis_joint" type="prismatic">
+    <joint name="root_z_axis_joint" type="prismatic">
         <parent link="root" />
         <child link="root_base_1_link_1" />
-        <axis xyz="1 0 0" />
+        <axis xyz="0 0 1" />
         <limit effort="100" lower="-20" upper="20" velocity="0.50" />
         <dynamics damping="10.0" friction="10" />
     </joint>
-    <joint name="root_z_axis_joint" type="prismatic">
+    <joint name="root_x_axis_joint" type="prismatic">
         <parent link="root_base_1_link_1" />
         <child link="root_base_1_link_2" />
-        <axis xyz="0 0 1" />
+        <axis xyz="1 0 0" />
         <limit effort="100" lower="-20" upper="20" velocity="0.50" />
         <dynamics damping="10.0" friction="10" />
     </joint>

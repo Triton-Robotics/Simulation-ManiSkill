@@ -13,6 +13,7 @@ import numpy as np
 
 from cv_bridge import CvBridge
 import torch
+from torch import Tensor
 
 
 class Sim_Node(Node):
@@ -73,6 +74,7 @@ class Sim_Node(Node):
         self.simulation = simulation.Simulation(options=options)
 
         self.desired_robot_state = utils.robot_state()
+        self.last_recorded_robot_state = utils.robot_state()
 
         self.cv_bridge = CvBridge()
 
@@ -82,6 +84,20 @@ class Sim_Node(Node):
         obs = self.simulation.step(self.desired_robot_state)
         t2 = time.time()
         print("step sim: ", (t2 - t1) * 1000, "ms")
+
+        robot_state_position: Tensor = obs["agent"]["infantry-0"]["qpos"]
+        robot_state_position = robot_state_position.squeeze(0)  # remove batch dimension
+
+        robot_state_velocity: Tensor = obs["agent"]["infantry-0"]["qvel"]
+        robot_state_velocity = robot_state_velocity.squeeze(0)  # remove batch dimension
+
+        self.last_recorded_robot_state = utils.robot_state(
+            x_vel=robot_state_velocity[0].item(),
+            y_vel=robot_state_velocity[1].item(),
+            angular_vel=robot_state_velocity[2].item(),
+            yaw=robot_state_position[3].item(),
+            pitch=robot_state_position[4].item(),
+        )
 
         if self.get_parameter("enable_cv_cam").get_parameter_value().bool_value:
             t1 = time.time()
@@ -137,8 +153,17 @@ class Sim_Node(Node):
         return response
 
     def read_robot_state(self, request, response):
-        # add filter like in stm32 bridge to get position a specific time
-        a = 1
+        # TODO make a buffer and respond based off the time in the request
+        # TOOD add angular vel and pitch and yaw vel
+        response.x_vel = self.last_recorded_robot_state.x_vel
+        response.y_vel = self.last_recorded_robot_state.y_vel
+        response.pitch = self.last_recorded_robot_state.pitch
+        response.yaw = self.last_recorded_robot_state.yaw
+        response.pitch_vel = 0.0
+        response.yaw_vel = 0.0
+        response.success = True
+
+        return response
 
     def points_to_ros_pointcloud2(self, points):
 

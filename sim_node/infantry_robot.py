@@ -101,6 +101,7 @@ class InfantryRobot(BaseAgent):
             pd_standard=dict(
                 # order matters. determines the order of the action space
                 # this is set to match the URDF
+                # x, y, angular, yaw, pitch
                 base=base_pd_joint_vel,
                 yaw=yaw_pd_joint,
                 pitch=pitch_pd_joint,
