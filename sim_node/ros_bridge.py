@@ -18,6 +18,16 @@ import torch
 class Sim_Node(Node):
     def __init__(self):
         super().__init__("sim_node")
+        self.declare_parameter("enable_cv_cam", True)
+        self.declare_parameter("cv_resolution_x", 1920)
+        self.declare_parameter("cv_resolution_y", 1200)
+        self.declare_parameter("cv_fov_horizontal", 31)
+        self.declare_parameter("cv_fov_vertical", 20)
+        self.declare_parameter("cv_shader_pack", "default")
+        # TODO add cv camera matrix parameter
+        self.declare_parameter("enable_lidar", True)
+        self.declare_parameter("lidar_pointcloud_resolution", 20)
+        # scenario parameter that maps to different keyframes for the 2 robot agents
 
         self.write_service = self.create_service(
             WriteSerial, "write_robot_state", self.write_robot_state
@@ -31,7 +41,36 @@ class Sim_Node(Node):
         self.image_pub = self.create_publisher(Image, "camera/image", qos_profile)
         # 10ms
         self.simulation_timer = self.create_timer(0.01, self.simulation_callback)
-        self.simulation = simulation.Simulation()
+        options = dict(
+            primary_robot=dict(
+                enable_cv_cam=self.get_parameter("enable_cv_cam")
+                .get_parameter_value()
+                .bool_value,
+                enable_lidar=self.get_parameter("enable_lidar")
+                .get_parameter_value()
+                .bool_value,
+                cv_resolution_x=self.get_parameter("cv_resolution_x")
+                .get_parameter_value()
+                .integer_value,
+                cv_resolution_y=self.get_parameter("cv_resolution_y")
+                .get_parameter_value()
+                .integer_value,
+                cv_fov_horizontal=self.get_parameter("cv_fov_horizontal")
+                .get_parameter_value()
+                .integer_value,
+                cv_fov_vertical=self.get_parameter("cv_fov_vertical")
+                .get_parameter_value()
+                .integer_value,
+                lidar_pointcloud_resolution=self.get_parameter(
+                    "lidar_pointcloud_resolution"
+                )
+                .get_parameter_value()
+                .integer_value,
+            ),
+            secondary_robot=dict(enable_cv_cam=False, enable_lidar=False),
+        )
+
+        self.simulation = simulation.Simulation(options=options)
 
         self.desired_robot_state = utils.robot_state()
 
@@ -44,7 +83,7 @@ class Sim_Node(Node):
         t2 = time.time()
         print("step sim: ", (t2 - t1) * 1000, "ms")
 
-        if "cv_camera" in obs["sensor_data"]:
+        if self.get_parameter("enable_cv_camera").get_parameter_value().bool_value:
             t1 = time.time()
             rgb_tensor = obs["sensor_data"]["cv_camera"]["rgb"]
             rgb_tensor: torch.Tensor
@@ -61,25 +100,25 @@ class Sim_Node(Node):
             t2 = time.time()
             print("cv pub: ", (t2 - t1) * 1000, "ms")
 
-        # Todo fix crash for when no lidar cameras are defined
-        t1 = time.time()
-        pointcloud = utils.sensor_data_to_pointcloud(obs)
-        t2 = time.time()
-        print("raw to pointcloud: ", (t2 - t1) * 1000, "ms")
+        if self.get_parameter("enable_lidar").get_parameter_value().bool_value:
+            t1 = time.time()
+            pointcloud = utils.sensor_data_to_pointcloud(obs)
+            t2 = time.time()
+            print("raw to pointcloud: ", (t2 - t1) * 1000, "ms")
 
-        t1 = time.time()
-        xyzw = pointcloud["xyzw"]
-        xyzw = xyzw.squeeze(0)
-        valid_mask = xyzw[:, 3] == 1
-        points = xyzw[valid_mask, :3]
-        msg = self.points_to_ros_pointcloud2(points)
-        t2 = time.time()
-        print("pointcloud to ros: ", (t2 - t1) * 1000, "ms")
+            t1 = time.time()
+            xyzw = pointcloud["xyzw"]
+            xyzw = xyzw.squeeze(0)
+            valid_mask = xyzw[:, 3] == 1
+            points = xyzw[valid_mask, :3]
+            msg = self.points_to_ros_pointcloud2(points)
+            t2 = time.time()
+            print("pointcloud to ros: ", (t2 - t1) * 1000, "ms")
 
-        t1 = time.time()
-        self.pointcloud_pub.publish(msg)
-        t2 = time.time()
-        print("publishing: ", (t2 - t1) * 1000, "ms")
+            t1 = time.time()
+            self.pointcloud_pub.publish(msg)
+            t2 = time.time()
+            print("publishing pointcloud: ", (t2 - t1) * 1000, "ms")
 
         end = time.time()
         print("fps (theoretical): ", 1 / (end - start))

@@ -1,3 +1,5 @@
+from mani_skill.envs.scene import ManiSkillScene
+from mani_skill.utils.structs.pose import Pose
 import sapien
 import numpy as np
 from mani_skill.agents.base_agent import BaseAgent, Keyframe
@@ -16,6 +18,21 @@ class InfantryRobot(BaseAgent):
     urdf_path = str(
         os.path.join(package_dir, "resource/models/infantry/infantry-blue.urdf")
     )
+
+    def __init__(
+        self,
+        scene: ManiSkillScene,
+        control_freq: int,
+        control_mode: str | None = None,
+        agent_idx: str | None = None,
+        initial_pose: Pose | Pose | None = None,
+        build_separate: bool = False,
+        options: dict = [],
+    ):
+        super().__init__(
+            scene, control_freq, control_mode, agent_idx, initial_pose, build_separate
+        )
+        self.options = options
 
     default_pos = sapien.Pose(p=[0, 0, 0.25], q=[1, 0, 0, 0])
     default_pos.set_rpy([np.deg2rad(90), 0, np.deg2rad(180)])
@@ -36,6 +53,7 @@ class InfantryRobot(BaseAgent):
 
     def _after_init(self):
         super()._after_init()
+        # TODO PUT keyframe position here
 
         # make light bars glow in rt rendering mode
         lightbar_link = self.robot.links_map["lightbars_link"]
@@ -93,111 +111,112 @@ class InfantryRobot(BaseAgent):
 
     @property
     def _sensor_configs(self):
-
         sensors = []
         # CV camera sensor
-        width = 1920
-        height = 1200
-        horizontal_fov = 31
-        vertical_fov = 20
-        f_x = width / (2 * np.tan(np.radians(horizontal_fov) / 2))
-        f_y = height / (2 * np.tan(np.radians(vertical_fov) / 2))
-        c_x = width / 2
-        c_y = height / 2
-        cv_camera_intrinsics = np.array([[f_x, 0, c_x], [0, f_y, c_y], [0, 0, 1]])
-        sensors.append(
-            CameraConfig(
-                uid="cv_camera",
-                pose=sapien.Pose(p=[0, 0, 0], q=[0.5, -0.5, -0.5, -0.5]),
-                width=width,
-                height=height,
-                intrinsic=cv_camera_intrinsics,
-                near=0.01,
-                far=100,
-                mount=self.robot.links_map["camera_link"],
-                shader_pack="minimal",
+        if self.options.get("enable_cv_cam", False):
+            width = self.options["cv_resolution_x"]
+            height = self.options["cv_resolution_y"]
+            horizontal_fov = self.options["cv_fov_horizontal"]
+            vertical_fov = self.options["cv_fov_vertical"]
+            f_x = width / (2 * np.tan(np.radians(horizontal_fov) / 2))
+            f_y = height / (2 * np.tan(np.radians(vertical_fov) / 2))
+            c_x = width / 2
+            c_y = height / 2
+            cv_camera_intrinsics = np.array([[f_x, 0, c_x], [0, f_y, c_y], [0, 0, 1]])
+            sensors.append(
+                CameraConfig(
+                    uid="cv_camera_" + str(self._agent_idx),
+                    pose=sapien.Pose(p=[0, 0, 0], q=[0.5, -0.5, -0.5, -0.5]),
+                    width=width,
+                    height=height,
+                    intrinsic=cv_camera_intrinsics,
+                    near=0.01,
+                    far=100,
+                    entity_uid="camera_link",
+                    shader_pack="minimal",
+                )
             )
-        )
 
-        # lidar simulated with multiple camera sensors
-        lidar_pose = [0, 0.2, 0]
-        pose0 = sapien.Pose(lidar_pose)
-        # left cam
-        pose0.set_rpy([0, np.deg2rad(-45), 0])
+        if self.options.get("enable_lidar", False):
+            # lidar simulated with multiple camera sensors
+            lidar_pose = [0, 0.2, 0]
+            pose0 = sapien.Pose(lidar_pose)
+            # left cam
+            pose0.set_rpy([0, np.deg2rad(-45), 0])
 
-        # bottom cam
-        pose1 = sapien.Pose(lidar_pose)
-        pose1.set_rpy([0, np.deg2rad(-45), np.deg2rad(-90)])
+            # bottom cam
+            pose1 = sapien.Pose(lidar_pose)
+            pose1.set_rpy([0, np.deg2rad(-45), np.deg2rad(-90)])
 
-        # right cam
-        pose2 = sapien.Pose(lidar_pose)
-        pose2.set_rpy([0, np.deg2rad(-45), np.deg2rad(-180)])
+            # right cam
+            pose2 = sapien.Pose(lidar_pose)
+            pose2.set_rpy([0, np.deg2rad(-45), np.deg2rad(-180)])
 
-        # top cam
-        pose3 = sapien.Pose(lidar_pose)
-        pose3.set_rpy([0, np.deg2rad(-45), np.deg2rad(-270)])
+            # top cam
+            pose3 = sapien.Pose(lidar_pose)
+            pose3.set_rpy([0, np.deg2rad(-45), np.deg2rad(-270)])
 
-        lidar_width_resolution = 20
-        lidar_height_resolution = 20
+            lidar_width_resolution = self.options["lidar_pointcloud_resolution"]
+            lidar_height_resolution = self.options["lidar_pointcloud_resolution"]
 
-        lidar_camera_intrinsics = np.array(
-            [
-                [0.5 * lidar_width_resolution, 0.0, 0.5 * lidar_width_resolution],
-                [0.0, 0.5 * lidar_height_resolution, 0.5 * lidar_height_resolution],
-                [0.0, 0.0, 1.0],
-            ]
-        )
-        sensors.append(
-            CameraConfig(
-                uid="lidar_0",
-                pose=pose0,
-                width=lidar_width_resolution,
-                height=lidar_height_resolution,
-                intrinsic=lidar_camera_intrinsics,
-                near=0.01,
-                far=100,
-                mount=self.robot.links_map["camera_link"],
-                shader_pack="minimal",
+            lidar_camera_intrinsics = np.array(
+                [
+                    [0.5 * lidar_width_resolution, 0.0, 0.5 * lidar_width_resolution],
+                    [0.0, 0.5 * lidar_height_resolution, 0.5 * lidar_height_resolution],
+                    [0.0, 0.0, 1.0],
+                ]
             )
-        )
-        sensors.append(
-            CameraConfig(
-                uid="lidar_1",
-                pose=pose1,
-                width=lidar_width_resolution,
-                height=lidar_height_resolution,
-                intrinsic=lidar_camera_intrinsics,
-                near=0.01,
-                far=100,
-                mount=self.robot.links_map["camera_link"],
-                shader_pack="minimal",
+            sensors.append(
+                CameraConfig(
+                    uid="lidar_0_" + str(self._agent_idx),
+                    pose=pose0,
+                    width=lidar_width_resolution,
+                    height=lidar_height_resolution,
+                    intrinsic=lidar_camera_intrinsics,
+                    near=0.01,
+                    far=100,
+                    entity_uid="camera_link",
+                    shader_pack="minimal",
+                )
             )
-        )
-        sensors.append(
-            CameraConfig(
-                uid="lidar_2",
-                pose=pose2,
-                width=lidar_width_resolution,
-                height=lidar_height_resolution,
-                intrinsic=lidar_camera_intrinsics,
-                near=0.01,
-                far=100,
-                mount=self.robot.links_map["camera_link"],
-                shader_pack="minimal",
+            sensors.append(
+                CameraConfig(
+                    uid="lidar_1_" + str(self._agent_idx),
+                    pose=pose1,
+                    width=lidar_width_resolution,
+                    height=lidar_height_resolution,
+                    intrinsic=lidar_camera_intrinsics,
+                    near=0.01,
+                    far=100,
+                    entity_uid="camera_link",
+                    shader_pack="minimal",
+                )
             )
-        )
-        sensors.append(
-            CameraConfig(
-                uid="lidar_3",
-                pose=pose3,
-                width=lidar_width_resolution,
-                height=lidar_height_resolution,
-                intrinsic=lidar_camera_intrinsics,
-                near=0.01,
-                far=100,
-                mount=self.robot.links_map["camera_link"],
-                shader_pack="minimal",
+            sensors.append(
+                CameraConfig(
+                    uid="lidar_2_" + str(self._agent_idx),
+                    pose=pose2,
+                    width=lidar_width_resolution,
+                    height=lidar_height_resolution,
+                    intrinsic=lidar_camera_intrinsics,
+                    near=0.01,
+                    far=100,
+                    entity_uid="camera_link",
+                    shader_pack="minimal",
+                )
             )
-        )
+            sensors.append(
+                CameraConfig(
+                    uid="lidar_3_" + str(self._agent_idx),
+                    pose=pose3,
+                    width=lidar_width_resolution,
+                    height=lidar_height_resolution,
+                    intrinsic=lidar_camera_intrinsics,
+                    near=0.01,
+                    far=100,
+                    entity_uid="camera_link",
+                    shader_pack="minimal",
+                )
+            )
 
         return sensors
