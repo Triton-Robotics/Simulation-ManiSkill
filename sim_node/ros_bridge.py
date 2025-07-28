@@ -24,7 +24,7 @@ class Sim_Node(Node):
         self.declare_parameter("cv_resolution_y", 1200)
         self.declare_parameter("cv_fov_horizontal", 31)
         self.declare_parameter("cv_fov_vertical", 20)
-        self.declare_parameter("cv_shader_pack", "default")
+        self.declare_parameter("cv_shader_pack", "rt-fast")
         # TODO add cv camera matrix parameter
         self.declare_parameter("enable_lidar", True)
         self.declare_parameter("lidar_pointcloud_resolution", 20)
@@ -62,6 +62,9 @@ class Sim_Node(Node):
                 cv_fov_vertical=self.get_parameter("cv_fov_vertical")
                 .get_parameter_value()
                 .integer_value,
+                cv_shader_pack=self.get_parameter("cv_shader_pack")
+                .get_parameter_value()
+                .string_value,
                 lidar_pointcloud_resolution=self.get_parameter(
                     "lidar_pointcloud_resolution"
                 )

@@ -138,7 +138,7 @@ class InfantryRobot(BaseAgent):
                     near=0.01,
                     far=100,
                     entity_uid="camera_link",
-                    shader_pack="minimal",
+                    shader_pack=self.options["cv_shader_pack"],
                 )
             )
 
