@@ -19,6 +19,10 @@ class InfantryRobot(BaseAgent):
         os.path.join(package_dir, "resource/models/infantry/infantry-blue.urdf")
     )
 
+    # TODO ideally we define a srdf file instead of disabling all collisions. That way we only disable problematic collisions and
+    disable_self_collisions = True
+    load_multiple_collisions = True
+
     def __init__(
         self,
         scene: ManiSkillScene,
