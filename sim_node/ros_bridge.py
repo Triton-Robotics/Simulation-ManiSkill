@@ -83,7 +83,7 @@ class Sim_Node(Node):
         t2 = time.time()
         print("step sim: ", (t2 - t1) * 1000, "ms")
 
-        if self.get_parameter("enable_cv_camera").get_parameter_value().bool_value:
+        if self.get_parameter("enable_cv_cam").get_parameter_value().bool_value:
             t1 = time.time()
             rgb_tensor = obs["sensor_data"]["cv_camera_0"]["rgb"]
             rgb_tensor: torch.Tensor
