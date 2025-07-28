@@ -6,6 +6,7 @@ from mani_skill.agents.base_agent import BaseAgent, Keyframe
 from mani_skill.agents.controllers import *
 from mani_skill.agents.registration import register_agent
 from mani_skill.sensors.camera import CameraConfig
+from torch import Tensor
 from ament_index_python import get_package_share_directory
 import os
 
@@ -39,11 +40,14 @@ class InfantryRobot(BaseAgent):
         self.options = options
 
     default_pos = sapien.Pose(p=[0, 0, 0.25], q=[1, 0, 0, 0])
-    default_pos.set_rpy([np.deg2rad(90), 0, np.deg2rad(180)])
+    default_pos.set_rpy([np.deg2rad(90), 0, np.deg2rad(45)])
+
+    aiming_target_pos = sapien.Pose(p=[2, -3, 0.25], q=[1, 0, 0, 0])
+    aiming_target_pos.set_rpy([np.deg2rad(90), 0, np.deg2rad(180)])
 
     keyframes = dict(
-        default=Keyframe(pose=default_pos)
-        # default=Keyframe(pose=sapien.Pose(p=[0, 0, 1.0], q=[1, 0, 0, 0]))
+        default=Keyframe(pose=default_pos),
+        aiming_target=Keyframe(pose=aiming_target_pos),
     )
 
     pitch_joint_names = ["pitch_joint"]
@@ -54,6 +58,14 @@ class InfantryRobot(BaseAgent):
         "root_x_axis_joint",
         "root_y_rotation_joint",
     ]
+
+    def reset(self, init_qpos: Tensor = None):
+        super().reset(init_qpos)
+
+        if "keyframe" in self.options:
+            desired_keyframe = self.options["keyframe"]
+            keyframe = self.keyframes[desired_keyframe]
+            self.robot.set_pose(keyframe.pose)
 
     def _after_init(self):
         super()._after_init()

@@ -7,6 +7,17 @@ from sim_node import comp_field
 import numpy as np
 from sim_node import utils
 
+SPAWN_SCENARIO_KEYFRAME_MAPPING: dict = dict(
+    center_1v1=dict(
+        primary_robot="default",
+        secondary_robot="aiming_target",
+    ),
+    navigate_from_spawn=dict(
+        primary_robot="blue_spawn",
+        secondary_robot="out_of_field",
+    ),
+)
+
 
 class Simulation:
 
@@ -18,17 +29,20 @@ class Simulation:
             obs_mode="state_dict+rgb+segmentation+position",
         )
         self.options = dict(reconfigure=True, user=options)
+        spawn_scenario: str = self.options["user"]["spawn_scenario"]
+        primary_robot_keyframe = SPAWN_SCENARIO_KEYFRAME_MAPPING[spawn_scenario][
+            "primary_robot"
+        ]
+        secondary_robot_keyframe = SPAWN_SCENARIO_KEYFRAME_MAPPING[spawn_scenario][
+            "secondary_robot"
+        ]
+        self.options["user"]["primary_robot"]["keyframe"] = primary_robot_keyframe
+        self.options["user"]["secondary_robot"]["keyframe"] = secondary_robot_keyframe
 
         self.base_env: BaseEnv = self.env
         self.past_obs = None
 
         obs, _ = self.env.reset(seed=seed, options=self.options)
-
-        multi_agent: MultiAgent = self.env.get_wrapper_attr("agent")
-        primary_agent: BaseAgent = multi_agent.agents[0]
-        secondary_agent: BaseAgent = multi_agent.agents[1]
-        primary_agent.robot.set_pose(primary_agent.keyframes["default"].pose)
-        # secondary_agent.robot.set_pose(secondary_agent.keyframes["default"])
 
     def step(self, desired_robot_state: utils.robot_state):
         # calculate world relative robot velocity

@@ -28,6 +28,7 @@ class Sim_Node(Node):
         # TODO add cv camera matrix parameter
         self.declare_parameter("enable_lidar", True)
         self.declare_parameter("lidar_pointcloud_resolution", 20)
+        self.declare_parameter("spawn_scenario", "center_1v1")
         # scenario parameter that maps to different keyframes for the 2 robot agents
 
         self.write_service = self.create_service(
@@ -43,6 +44,9 @@ class Sim_Node(Node):
         # 10ms
         self.simulation_timer = self.create_timer(0.01, self.simulation_callback)
         options = dict(
+            spawn_scenario=self.get_parameter("spawn_scenario")
+            .get_parameter_value()
+            .string_value,
             primary_robot=dict(
                 enable_cv_cam=self.get_parameter("enable_cv_cam")
                 .get_parameter_value()
