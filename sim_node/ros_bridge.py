@@ -19,6 +19,8 @@ from torch import Tensor
 class Sim_Node(Node):
     def __init__(self):
         super().__init__("sim_node")
+
+        # cv cam params
         self.declare_parameter("enable_cv_cam", True)
         self.declare_parameter("cv_resolution_x", 1920)
         self.declare_parameter("cv_resolution_y", 1200)
@@ -26,10 +28,14 @@ class Sim_Node(Node):
         self.declare_parameter("cv_fov_vertical", 20)
         self.declare_parameter("cv_shader_pack", "default")
         # TODO add cv camera matrix parameter
+
+        # lidar params
         self.declare_parameter("enable_lidar", True)
         self.declare_parameter("lidar_pointcloud_resolution", 20)
+
+        # general simulation params
         self.declare_parameter("spawn_scenario", "center_1v1")
-        # scenario parameter that maps to different keyframes for the 2 robot agents
+        self.declare_parameter("human_gui", True)
 
         self.write_service = self.create_service(
             WriteSerial, "write_robot_state", self.write_robot_state
@@ -44,14 +50,14 @@ class Sim_Node(Node):
         # 10ms
         self.simulation_timer = self.create_timer(0.01, self.simulation_callback)
         options = dict(
+            # general simulation options
             spawn_scenario=self.get_parameter("spawn_scenario")
             .get_parameter_value()
             .string_value,
+            human_gui=self.get_parameter("human_gui").get_parameter_value().bool_value,
             primary_robot=dict(
+                # cv cam options
                 enable_cv_cam=self.get_parameter("enable_cv_cam")
-                .get_parameter_value()
-                .bool_value,
-                enable_lidar=self.get_parameter("enable_lidar")
                 .get_parameter_value()
                 .bool_value,
                 cv_resolution_x=self.get_parameter("cv_resolution_x")
@@ -69,12 +75,17 @@ class Sim_Node(Node):
                 cv_shader_pack=self.get_parameter("cv_shader_pack")
                 .get_parameter_value()
                 .string_value,
+                # lidar options
+                enable_lidar=self.get_parameter("enable_lidar")
+                .get_parameter_value()
+                .bool_value,
                 lidar_pointcloud_resolution=self.get_parameter(
                     "lidar_pointcloud_resolution"
                 )
                 .get_parameter_value()
                 .integer_value,
             ),
+            # second robot is just used as target practice so we dont care about its sensors
             secondary_robot=dict(enable_cv_cam=False, enable_lidar=False),
         )
 

@@ -22,13 +22,15 @@ SPAWN_SCENARIO_KEYFRAME_MAPPING: dict = dict(
 class Simulation:
 
     def __init__(self, options: dict, seed=2930):
+        self.options = dict(reconfigure=True, user=options)
+        self.should_render_gui = self.options["user"]["human_gui"]
         self.env: BaseEnv = gym.make(
             "comp_field",  # This should map to your registered environment
-            render_mode="human",  # Use "human" to visualize, or "rgb_array" to render frames without GUI
+            render_mode=("human" if self.should_render_gui else None),
             reward_mode="sparse",
             obs_mode="state_dict+rgb+segmentation+position",
         )
-        self.options = dict(reconfigure=True, user=options)
+
         spawn_scenario: str = self.options["user"]["spawn_scenario"]
         primary_robot_keyframe = SPAWN_SCENARIO_KEYFRAME_MAPPING[spawn_scenario][
             "primary_robot"
@@ -68,7 +70,8 @@ class Simulation:
 
         obs, reward, terminated, truncated, info = self.env.step(action=action)
         done = terminated or truncated
-        self.env.render()
+        if self.should_render_gui:
+            self.env.render()
 
         self.past_obs = obs
         return obs
