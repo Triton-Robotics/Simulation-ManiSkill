@@ -57,9 +57,10 @@ class InfantryRobot(BaseAgent):
 
     def _after_init(self):
         super()._after_init()
-        # TODO PUT keyframe position here
 
-        # make light bars glow in rt rendering mode
+    def _after_loading_articulation(self):
+        super()._after_loading_articulation()
+
         lightbar_link = self.robot.links_map["lightbars_link"]
         visual_block = lightbar_link.render_shapes[0]
         for shape in visual_block:
