@@ -158,6 +158,8 @@ class CompFieldEnv(BaseEnv):
             builder.set_physx_body_type("static")
             builder.initial_pose = sapien.Pose(p=[0, 0, 0])
             origional_actor = builder.build(name=name)
+            # make field not collide with itself
+            origional_actor.set_collision_group_bit(group=2, bit_idx=2, bit=1)
 
             if load_flipped_copy:
                 actor_builders = loader.parse(str(full_urdf_path))["actor_builders"]
@@ -170,4 +172,6 @@ class CompFieldEnv(BaseEnv):
                 flipped_pos = [0, 0, 0]
                 q_rotate_180_z_axis = [0, 0, 0, 1]
                 builder.initial_pose = sapien.Pose(p=flipped_pos, q=q_rotate_180_z_axis)
-                builder.build(name=(name + "_flipped"))
+                flipped_actor = builder.build(name=(name + "_flipped"))
+                # make field not collide with itself
+                flipped_actor.set_collision_group_bit(group=2, bit_idx=2, bit=1)
