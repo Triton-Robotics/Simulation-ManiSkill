@@ -48,20 +48,20 @@ class KeyboardControls(Node):
             return
 
         # primary robot translation
-        if key.char == "w":
+        if key.char == "t":
             self.primary_robot_teleop_input.x_vel = MAX_TRANSLATION_VEL
-        elif key.char == "s":
+        elif key.char == "g":
             self.primary_robot_teleop_input.x_vel = -MAX_TRANSLATION_VEL
         # positive y_vel is left
-        elif key.char == "a":
+        elif key.char == "f":
             self.primary_robot_teleop_input.y_vel = MAX_TRANSLATION_VEL
-        elif key.char == "d":
+        elif key.char == "h":
             self.primary_robot_teleop_input.y_vel = -MAX_TRANSLATION_VEL
         # primary robot angular rotation
         # positive angular velocity is counterclockwise
-        elif key.char == "q":
+        elif key.char == "r":
             self.primary_robot_teleop_input.angular_vel = MAX_ANGULAR_VEL
-        elif key.char == "e":
+        elif key.char == "y":
             self.primary_robot_teleop_input.angular_vel = -MAX_ANGULAR_VEL
 
     def on_release(self, key: keyboard.Key):
@@ -71,18 +71,18 @@ class KeyboardControls(Node):
 
         # same as on_press but flipped signs
         # primary robot translation
-        if key.char == "w":
+        if key.char == "t":
             self.primary_robot_teleop_input.x_vel = 0.0
-        elif key.char == "s":
+        elif key.char == "g":
             self.primary_robot_teleop_input.x_vel = 0.0
-        elif key.char == "a":
+        elif key.char == "f":
             self.primary_robot_teleop_input.y_vel = 0.0
-        elif key.char == "d":
+        elif key.char == "h":
             self.primary_robot_teleop_input.y_vel = 0.0
         # primary robot angular rotation
-        elif key.char == "q":
+        elif key.char == "r":
             self.primary_robot_teleop_input.angular_vel = 0.0
-        elif key.char == "e":
+        elif key.char == "y":
             self.primary_robot_teleop_input.angular_vel = 0.0
 
     def timer_callback(self):
