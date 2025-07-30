@@ -9,7 +9,7 @@ from sim_node import simulation
 from sensor_msgs.msg import Image, PointCloud2, PointField
 from std_msgs.msg import Header
 from sensor_msgs_py import point_cloud2  # pointcloud utilizes
-from sim_node import utils
+from sim_node import utils, constants
 import numpy as np
 
 from cv_bridge import CvBridge
@@ -187,20 +187,6 @@ class Sim_Node(Node):
         print("fps (theoretical): ", 1 / (end - start))
         print("time taken: ", (end - start) * 1000, "ms\n---\n")
 
-    def write_robot_state(self, request, response):
-        self.control_mode = "programmatic"
-        self.programmatic_desired_robot_state = utils.robot_state(
-            # pitch is negated so negative pitch means down
-            -request.pitch,
-            request.yaw,
-            request.x_vel,
-            request.y_vel,
-            request.angular_vel,
-        )
-
-        response.success = True
-        return response
-
     def read_robot_state(self, request, response):
         # TODO make a buffer and respond based off the time in the request
         # TOOD add angular vel and pitch and yaw vel
@@ -214,15 +200,30 @@ class Sim_Node(Node):
 
         return response
 
+    def write_robot_state(self, request, response):
+        self.control_mode = "programmatic"
+        self.programmatic_desired_robot_state = utils.robot_state(
+            # pitch is negated so negative pitch means down
+            -request.pitch,
+            request.yaw,
+            # we scale by max because maniskill normalizes velocity action space between -1,1
+            request.x_vel / constants.MAX_TRANSLATION_VEL_M_S,
+            request.y_vel / constants.MAX_TRANSLATION_VEL_M_S,
+            request.angular_vel / constants.MAX_ANGULAR_VEL_RADS_S,
+        )
+
+        response.success = True
+        return response
+
     # TODO fix this overriding the write_robot_state service call when all keys are let go of and 0's and being published
     def primary_robot_teleop_callback(self, msg):
         received_state = utils.robot_state(
             # pitch is negated so negative pitch means down
-            -msg.pitch,
-            msg.yaw,
-            msg.x_vel,
-            msg.y_vel,
-            msg.angular_vel,
+            pitch=-msg.pitch,
+            yaw=msg.yaw,
+            x_vel=msg.x_vel / constants.MAX_TRANSLATION_VEL_M_S,
+            y_vel=msg.y_vel / constants.MAX_TRANSLATION_VEL_M_S,
+            angular_vel=msg.angular_vel / constants.MAX_ANGULAR_VEL_RADS_S,
         )
 
         if received_state != self.teleop_desired_robot_state:
@@ -230,13 +231,12 @@ class Sim_Node(Node):
             self.teleop_desired_robot_state = received_state
 
     def secondary_robot_teleop_callback(self, msg):
-        print("secondary callback")
         self.secondary_robot_teleop_desired_state = utils.robot_state(
             pitch=0,
             yaw=0,
-            x_vel=msg.x_vel,
-            y_vel=msg.y_vel,
-            angular_vel=msg.angular_vel,
+            x_vel=msg.x_vel / constants.MAX_TRANSLATION_VEL_M_S,
+            y_vel=msg.y_vel / constants.MAX_TRANSLATION_VEL_M_S,
+            angular_vel=msg.angular_vel / constants.MAX_ANGULAR_VEL_RADS_S,
         )
 
     def points_to_ros_pointcloud2(self, points):
