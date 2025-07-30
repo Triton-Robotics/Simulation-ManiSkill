@@ -9,6 +9,7 @@ from mani_skill.sensors.camera import CameraConfig
 from torch import Tensor
 from ament_index_python import get_package_share_directory
 import os
+from sim_node import constants
 
 package_dir = get_package_share_directory("sim_node")
 
@@ -96,6 +97,7 @@ class InfantryRobot(BaseAgent):
             normalize_action=False,
         )
 
+        # TODO use PDJointPosVelController for yaw
         yaw_pd_joint = PDJointPosControllerConfig(
             self.yaw_joint_names,
             lower=None,
@@ -108,8 +110,16 @@ class InfantryRobot(BaseAgent):
 
         base_pd_joint_vel = PDBaseVelControllerConfig(
             self.base_joint_names,
-            lower=[-1, -1, -3.14],
-            upper=[1, 1, 3.14],
+            lower=[
+                -constants.MAX_TRANSLATION_VEL_M_S,
+                -constants.MAX_TRANSLATION_VEL_M_S,
+                -constants.MAX_ANGULAR_VEL_RADS_S,
+            ],
+            upper=[
+                constants.MAX_TRANSLATION_VEL_M_S,
+                constants.MAX_TRANSLATION_VEL_M_S,
+                constants.MAX_ANGULAR_VEL_RADS_S,
+            ],
             damping=1000,
             force_limit=500,
         )

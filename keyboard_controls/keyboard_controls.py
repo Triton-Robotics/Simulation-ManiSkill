@@ -3,10 +3,7 @@ from rclpy.node import Node
 from tr_messages.msg import SimTeleopInput
 from pynput import keyboard
 import numpy
-
-# TODO make these more reasonable
-MAX_TRANSLATION_VEL = 1.0
-MAX_ANGULAR_VEL = 1.0
+from sim_node import constants
 
 
 class TeleopInput:
@@ -52,51 +49,83 @@ class KeyboardControls(Node):
 
         # primary robot translation
         if key.char == "t":
-            self.primary_robot_teleop_input.x_vel = MAX_TRANSLATION_VEL
+            self.primary_robot_teleop_input.x_vel = constants.TELEOP_TRANSLATION_VEL_M_S
         elif key.char == "g":
-            self.primary_robot_teleop_input.x_vel = -MAX_TRANSLATION_VEL
+            self.primary_robot_teleop_input.x_vel = (
+                -constants.TELEOP_TRANSLATION_VEL_M_S
+            )
         # positive y_vel is left
         elif key.char == "f":
-            self.primary_robot_teleop_input.y_vel = MAX_TRANSLATION_VEL
+            self.primary_robot_teleop_input.y_vel = constants.TELEOP_TRANSLATION_VEL_M_S
         elif key.char == "h":
-            self.primary_robot_teleop_input.y_vel = -MAX_TRANSLATION_VEL
+            self.primary_robot_teleop_input.y_vel = (
+                -constants.TELEOP_TRANSLATION_VEL_M_S
+            )
         # primary robot angular rotation
         # positive angular velocity is counterclockwise
         elif key.char == "r":
-            self.primary_robot_teleop_input.angular_vel = MAX_ANGULAR_VEL
+            self.primary_robot_teleop_input.angular_vel = (
+                constants.TELEOP_ANGULAR_VEL_RADS_S
+            )
         elif key.char == "y":
-            self.primary_robot_teleop_input.angular_vel = -MAX_ANGULAR_VEL
+            self.primary_robot_teleop_input.angular_vel = (
+                -constants.TELEOP_ANGULAR_VEL_RADS_S
+            )
 
         # secondary robot translation
         if key.char == "i":
-            self.secondary_robot_teleop_input.x_vel = MAX_TRANSLATION_VEL
+            self.secondary_robot_teleop_input.x_vel = (
+                constants.TELEOP_TRANSLATION_VEL_M_S
+            )
         elif key.char == "k":
-            self.secondary_robot_teleop_input.x_vel = -MAX_TRANSLATION_VEL
+            self.secondary_robot_teleop_input.x_vel = (
+                -constants.TELEOP_TRANSLATION_VEL_M_S
+            )
         # positive y_vel is left
         elif key.char == "j":
-            self.secondary_robot_teleop_input.y_vel = MAX_TRANSLATION_VEL
+            self.secondary_robot_teleop_input.y_vel = (
+                constants.TELEOP_TRANSLATION_VEL_M_S
+            )
         elif key.char == "l":
-            self.secondary_robot_teleop_input.y_vel = -MAX_TRANSLATION_VEL
+            self.secondary_robot_teleop_input.y_vel = (
+                -constants.TELEOP_TRANSLATION_VEL_M_S
+            )
         # secondary robot angular rotation
         # this is coded this way because secondary robot is used for target practice so we often want to beyblade it at different speeds
         elif key.char == "5":
             self.secondary_robot_teleop_input.angular_vel = 0.0
         elif key.char == "4":
-            self.secondary_robot_teleop_input.angular_vel = MAX_ANGULAR_VEL * 0.25
+            self.secondary_robot_teleop_input.angular_vel = (
+                constants.MAX_ANGULAR_VEL_RADS_S * 0.25
+            )
         elif key.char == "3":
-            self.secondary_robot_teleop_input.angular_vel = MAX_ANGULAR_VEL * 0.5
+            self.secondary_robot_teleop_input.angular_vel = (
+                constants.MAX_ANGULAR_VEL_RADS_S * 0.5
+            )
         elif key.char == "2":
-            self.secondary_robot_teleop_input.angular_vel = MAX_ANGULAR_VEL * 0.75
+            self.secondary_robot_teleop_input.angular_vel = (
+                constants.MAX_ANGULAR_VEL_RADS_S * 0.75
+            )
         elif key.char == "1":
-            self.secondary_robot_teleop_input.angular_vel = MAX_ANGULAR_VEL
+            self.secondary_robot_teleop_input.angular_vel = (
+                constants.MAX_ANGULAR_VEL_RADS_S
+            )
         elif key.char == "6":
-            self.secondary_robot_teleop_input.angular_vel = -MAX_ANGULAR_VEL * 0.25
+            self.secondary_robot_teleop_input.angular_vel = (
+                -constants.MAX_ANGULAR_VEL_RADS_S * 0.25
+            )
         elif key.char == "7":
-            self.secondary_robot_teleop_input.angular_vel = -MAX_ANGULAR_VEL * 0.5
+            self.secondary_robot_teleop_input.angular_vel = (
+                -constants.MAX_ANGULAR_VEL_RADS_S * 0.5
+            )
         elif key.char == "8":
-            self.secondary_robot_teleop_input.angular_vel = -MAX_ANGULAR_VEL * 0.75
+            self.secondary_robot_teleop_input.angular_vel = (
+                -constants.MAX_ANGULAR_VEL_RADS_S * 0.75
+            )
         elif key.char == "9":
-            self.secondary_robot_teleop_input.angular_vel = -MAX_ANGULAR_VEL
+            self.secondary_robot_teleop_input.angular_vel = (
+                -constants.MAX_ANGULAR_VEL_RADS_S
+            )
 
     def on_release(self, key: keyboard.Key):
         if not hasattr(key, "char") or (
