@@ -2,6 +2,7 @@ import time
 import rclpy
 from rclpy.node import Node
 from tr_messages.srv import WriteSerial, ListenSerial
+from tr_messages.msg import SimTeleopInput
 from sensor_msgs.msg import Image
 from sim_node import simulation
 
@@ -36,6 +37,13 @@ class Sim_Node(Node):
         # general simulation params
         self.declare_parameter("spawn_scenario", "center_1v1")
         self.declare_parameter("human_gui", True)
+
+        self.primary_robot_teleop = self.create_subscription(
+            SimTeleopInput,
+            "simulation/primary_robot_teleop",
+            self.primary_robot_teleop_callback,
+            10,
+        )
 
         self.write_service = self.create_service(
             WriteSerial, "write_robot_state", self.write_robot_state
@@ -91,7 +99,9 @@ class Sim_Node(Node):
 
         self.simulation = simulation.Simulation(options=options)
 
-        self.desired_robot_state = utils.robot_state()
+        self.control_mode = "programmatic"
+        self.programmatic_desired_robot_state = utils.robot_state()
+        self.teleop_desired_robot_state = utils.robot_state()
         self.last_recorded_robot_state = utils.robot_state()
 
         self.cv_bridge = CvBridge()
@@ -99,7 +109,16 @@ class Sim_Node(Node):
     def simulation_callback(self):
         start = time.time()
         t1 = time.time()
-        obs = self.simulation.step(self.desired_robot_state)
+
+        desired_robot_state = None
+        if self.control_mode == "programmatic":
+            desired_robot_state = self.programmatic_desired_robot_state
+        elif self.control_mode == "teleop":
+            desired_robot_state = self.teleop_desired_robot_state
+        else:
+            RuntimeError(f"invalid control_mode. {self.control_mode}")
+
+        obs = self.simulation.step(desired_robot_state)
         t2 = time.time()
         print("step sim: ", (t2 - t1) * 1000, "ms")
 
@@ -159,7 +178,8 @@ class Sim_Node(Node):
         print("time taken: ", (end - start) * 1000, "ms\n---\n")
 
     def write_robot_state(self, request, response):
-        self.desired_robot_state = utils.robot_state(
+        self.control_mode = "programmatic"
+        self.programmatic_desired_robot_state = utils.robot_state(
             # pitch is negated so negative pitch means down
             -request.pitch,
             request.yaw,
@@ -183,6 +203,21 @@ class Sim_Node(Node):
         response.success = True
 
         return response
+
+    # TODO fix this overriding the write_robot_state service call when all keys are let go of and 0's and being published
+    def primary_robot_teleop_callback(self, msg):
+        received_state = utils.robot_state(
+            # pitch is negated so negative pitch means down
+            -msg.pitch,
+            msg.yaw,
+            msg.x_vel,
+            msg.y_vel,
+            msg.angular_vel,
+        )
+
+        if received_state != self.teleop_desired_robot_state:
+            self.control_mode = "teleop"
+            self.teleop_desired_robot_state = received_state
 
     def points_to_ros_pointcloud2(self, points):
 

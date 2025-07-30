@@ -16,6 +16,8 @@
     <depend>cv_bridge</depend>
     <depend>sensor_msgs</depend>
 
+    <depend>python3-pynput</depend>
+
     <export>
         <build_type>ament_python</build_type>
     </export>

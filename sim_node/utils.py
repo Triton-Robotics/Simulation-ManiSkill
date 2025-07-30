@@ -24,6 +24,15 @@ class robot_state:
         self.y_vel = y_vel
         self.angular_vel = angular_vel
 
+    def __eq__(self, value: object) -> bool:
+        return (
+            self.pitch == value.pitch
+            and self.yaw == value.yaw
+            and self.x_vel == value.x_vel
+            and self.y_vel == value.y_vel
+            and self.angular_vel == value.angular_vel
+        )
+
 
 def sensor_data_to_pointcloud(observation: Dict):
     """convert all camera data in sensor to pointcloud data"""
