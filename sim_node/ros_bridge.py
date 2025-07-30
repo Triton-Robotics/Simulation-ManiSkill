@@ -38,10 +38,16 @@ class Sim_Node(Node):
         self.declare_parameter("spawn_scenario", "center_1v1")
         self.declare_parameter("human_gui", True)
 
-        self.primary_robot_teleop = self.create_subscription(
+        self.primary_robot_teleop_sub = self.create_subscription(
             SimTeleopInput,
             "simulation/primary_robot_teleop",
             self.primary_robot_teleop_callback,
+            10,
+        )
+        self.secondary_robot_teleop_sub = self.create_subscription(
+            SimTeleopInput,
+            "simulation/secondary_robot_teleop",
+            self.secondary_robot_teleop_callback,
             10,
         )
 
@@ -102,6 +108,7 @@ class Sim_Node(Node):
         self.control_mode = "programmatic"
         self.programmatic_desired_robot_state = utils.robot_state()
         self.teleop_desired_robot_state = utils.robot_state()
+        self.secondary_robot_teleop_desired_state = utils.robot_state()
         self.last_recorded_robot_state = utils.robot_state()
 
         self.cv_bridge = CvBridge()
@@ -110,15 +117,18 @@ class Sim_Node(Node):
         start = time.time()
         t1 = time.time()
 
-        desired_robot_state = None
+        primary_robot_state = None
         if self.control_mode == "programmatic":
-            desired_robot_state = self.programmatic_desired_robot_state
+            primary_robot_state = self.programmatic_desired_robot_state
         elif self.control_mode == "teleop":
-            desired_robot_state = self.teleop_desired_robot_state
+            primary_robot_state = self.teleop_desired_robot_state
         else:
             RuntimeError(f"invalid control_mode. {self.control_mode}")
 
-        obs = self.simulation.step(desired_robot_state)
+        obs = self.simulation.step(
+            primary_robot_state=primary_robot_state,
+            secondary_robot_state=self.secondary_robot_teleop_desired_state,
+        )
         t2 = time.time()
         print("step sim: ", (t2 - t1) * 1000, "ms")
 
@@ -218,6 +228,16 @@ class Sim_Node(Node):
         if received_state != self.teleop_desired_robot_state:
             self.control_mode = "teleop"
             self.teleop_desired_robot_state = received_state
+
+    def secondary_robot_teleop_callback(self, msg):
+        print("secondary callback")
+        self.secondary_robot_teleop_desired_state = utils.robot_state(
+            pitch=0,
+            yaw=0,
+            x_vel=msg.x_vel,
+            y_vel=msg.y_vel,
+            angular_vel=msg.angular_vel,
+        )
 
     def points_to_ros_pointcloud2(self, points):
 

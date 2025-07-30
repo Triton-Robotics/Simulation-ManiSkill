@@ -33,6 +33,11 @@ class robot_state:
             and self.angular_vel == value.angular_vel
         )
 
+    def __str__(self) -> str:
+        return (
+            f"{self.x_vel}, {self.y_vel}, {self.angular_vel}, {self.pitch}, {self.yaw}"
+        )
+
 
 def sensor_data_to_pointcloud(observation: Dict):
     """convert all camera data in sensor to pointcloud data"""

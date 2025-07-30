@@ -42,30 +42,52 @@ class Simulation:
         self.options["user"]["secondary_robot"]["keyframe"] = secondary_robot_keyframe
 
         self.base_env: BaseEnv = self.env
+        # TODO dont make this none make it the initial reset obs instead
         self.past_obs = None
 
         obs, _ = self.env.reset(seed=seed, options=self.options)
 
-    def step(self, desired_robot_state: utils.robot_state):
+    def step(
+        self,
+        primary_robot_state: utils.robot_state,
+        secondary_robot_state: utils.robot_state,
+    ):
         # calculate world relative robot velocity
         if self.past_obs is not None:
-            world_relative_vel = self.local_to_world_vel(
-                desired_robot_state.x_vel, desired_robot_state.y_vel
+            primary_world_relative_vel = self.head_to_world_vel(
+                "infantry-0",
+                primary_robot_state.x_vel,
+                primary_robot_state.y_vel,
+            )
+            secondary_world_relative_vel = self.head_to_world_vel(
+                "infantry-1",
+                secondary_robot_state.x_vel,
+                secondary_robot_state.y_vel,
             )
         else:
-            world_relative_vel = np.array([0, 0])
+            primary_world_relative_vel = np.array([0, 0])
+            secondary_world_relative_vel = np.array([0, 0])
 
         action = {
             "infantry-0": np.array(
                 [
-                    world_relative_vel[0],
-                    world_relative_vel[1],
-                    desired_robot_state.angular_vel,
-                    desired_robot_state.yaw,
-                    desired_robot_state.pitch,
+                    primary_world_relative_vel[0],
+                    primary_world_relative_vel[1],
+                    # TODO PDbase controller maps angular velocity weirdly. Passing 0.5 makes it 1.57 I think its in units of rotations
+                    primary_robot_state.angular_vel,
+                    primary_robot_state.yaw,
+                    primary_robot_state.pitch,
                 ]
             ),
-            "infantry-1": np.array([0, 0, 0, 0, 0]),
+            "infantry-1": np.array(
+                [
+                    secondary_world_relative_vel[0],
+                    secondary_world_relative_vel[1],
+                    secondary_robot_state.angular_vel,
+                    secondary_robot_state.yaw,
+                    secondary_robot_state.pitch,
+                ]
+            ),
         }
 
         obs, reward, terminated, truncated, info = self.env.step(action=action)
@@ -79,8 +101,8 @@ class Simulation:
     def shutdown(self):
         self.env.close()
 
-    def local_to_world_vel(self, x_vel, y_vel):
-        yaw_rads = self.past_obs["agent"]["infantry-0"]["qpos"][0][3].item()
+    def head_to_world_vel(self, robot: str, x_vel, y_vel):
+        yaw_rads = self.past_obs["agent"][robot]["qpos"][0][3].item()
         rotation_matrix = np.array(
             [
                 [np.cos(yaw_rads), -np.sin(yaw_rads)],
