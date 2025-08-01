@@ -215,7 +215,6 @@ class Sim_Node(Node):
         response.success = True
         return response
 
-    # TODO fix this overriding the write_robot_state service call when all keys are let go of and 0's and being published
     def primary_robot_teleop_callback(self, msg):
         received_state = utils.robot_state(
             # pitch is negated so negative pitch means down
