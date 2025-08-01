@@ -73,7 +73,6 @@ class Simulation:
                 [
                     primary_world_relative_vel[0],
                     primary_world_relative_vel[1],
-                    # TODO PDbase controller maps angular velocity weirdly. Passing 0.5 makes it 1.57 I think its in units of rotations
                     primary_robot_state.angular_vel,
                     primary_robot_state.yaw,
                     primary_robot_state.pitch,
