@@ -28,7 +28,7 @@ class Sim_Node(Node):
         self.declare_parameter("cv_fov_horizontal", 31)
         self.declare_parameter("cv_fov_vertical", 20)
         self.declare_parameter("cv_exposure", 0.005)
-        self.declare_parameter("cv_shader_pack", "default")
+        self.declare_parameter("cv_ray_tracing", False)
         # TODO add cv camera matrix parameter
 
         # lidar params
@@ -90,9 +90,9 @@ class Sim_Node(Node):
                 cv_fov_vertical=self.get_parameter("cv_fov_vertical")
                 .get_parameter_value()
                 .integer_value,
-                cv_shader_pack=self.get_parameter("cv_shader_pack")
+                cv_ray_tracing=self.get_parameter("cv_ray_tracing")
                 .get_parameter_value()
-                .string_value,
+                .bool_value,
                 # lidar options
                 enable_lidar=self.get_parameter("enable_lidar")
                 .get_parameter_value()

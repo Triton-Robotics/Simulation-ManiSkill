@@ -164,7 +164,7 @@ class InfantryRobot(BaseAgent):
             }
 
             # TODO make a boolean raytracing rosparam to toggle between rt and non rt configs
-            cv_shader_config = ShaderConfig(
+            cv_shader_config_rt = ShaderConfig(
                 shader_pack="rt",
                 texture_names=cv_texture_names,
                 shader_pack_config={
@@ -172,6 +172,12 @@ class InfantryRobot(BaseAgent):
                     "ray_tracing_path_depth": 1,
                     "ray_tracing_denoiser": "optix",
                 },
+                texture_transforms=cv_texture_transforms,
+            )
+
+            cv_shader_config_raster = ShaderConfig(
+                shader_pack="default",
+                texture_names=cv_texture_names,
                 texture_transforms=cv_texture_transforms,
             )
 
@@ -185,8 +191,11 @@ class InfantryRobot(BaseAgent):
                     near=0.01,
                     far=100,
                     entity_uid="camera_link",
-                    # shader_pack="default",
-                    shader_config=cv_shader_config,
+                    shader_config=(
+                        cv_shader_config_rt
+                        if self.options["cv_ray_tracing"]
+                        else cv_shader_config_raster
+                    ),
                 )
             )
 
