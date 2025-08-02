@@ -10,6 +10,8 @@ from torch import Tensor
 from ament_index_python import get_package_share_directory
 import os
 from sim_node import constants
+from mani_skill.render.shaders import ShaderConfig, default_position_texture_transform
+import torch
 
 package_dir = get_package_share_directory("sim_node")
 
@@ -151,6 +153,28 @@ class InfantryRobot(BaseAgent):
             c_x = width / 2
             c_y = height / 2
             cv_camera_intrinsics = np.array([[f_x, 0, c_x], [0, f_y, c_y], [0, 0, 1]])
+
+            # taken from Shaders.py in maniskill repo
+            cv_texture_names = {
+                "Color": ["rgb"],
+            }
+
+            cv_texture_transforms = {
+                "Color": lambda data: {"rgb": (data[..., :3] * 255).to(torch.uint8)},
+            }
+
+            # TODO make a boolean raytracing rosparam to toggle between rt and non rt configs
+            cv_shader_config = ShaderConfig(
+                shader_pack="rt",
+                texture_names=cv_texture_names,
+                shader_pack_config={
+                    "ray_tracing_samples_per_pixel": 2,
+                    "ray_tracing_path_depth": 1,
+                    "ray_tracing_denoiser": "optix",
+                },
+                texture_transforms=cv_texture_transforms,
+            )
+
             sensors.append(
                 CameraConfig(
                     uid="cv_camera_" + str(self._agent_idx),
@@ -161,7 +185,8 @@ class InfantryRobot(BaseAgent):
                     near=0.01,
                     far=100,
                     entity_uid="camera_link",
-                    shader_pack=self.options["cv_shader_pack"],
+                    # shader_pack="default",
+                    shader_config=cv_shader_config,
                 )
             )
 
@@ -194,6 +219,25 @@ class InfantryRobot(BaseAgent):
                     [0.0, 0.0, 1.0],
                 ]
             )
+
+            lidar_texture_names = {
+                "Position": ["position", "depth"],
+                "Segmentation": ["segmentation"],
+            }
+
+            lidar_texture_transforms = {
+                "Position": default_position_texture_transform,
+                # note in default shader pack, 0 is visual shape / mesh, 1 is actor/link level, 2 is parallel scene ID, 3 is unused
+                "Segmentation": lambda data: {"segmentation": data[..., 1][..., None]},
+            }
+
+            lidar_shader_config = ShaderConfig(
+                shader_pack="default",
+                texture_names=lidar_texture_names,
+                shader_pack_config={},
+                texture_transforms=lidar_texture_transforms,
+            )
+
             sensors.append(
                 CameraConfig(
                     uid="lidar_0_" + str(self._agent_idx),
@@ -204,7 +248,7 @@ class InfantryRobot(BaseAgent):
                     near=0.01,
                     far=100,
                     entity_uid="camera_link",
-                    shader_pack="minimal",
+                    shader_config=lidar_shader_config,
                 )
             )
             sensors.append(
@@ -217,7 +261,7 @@ class InfantryRobot(BaseAgent):
                     near=0.01,
                     far=100,
                     entity_uid="camera_link",
-                    shader_pack="minimal",
+                    shader_config=lidar_shader_config,
                 )
             )
             sensors.append(
@@ -230,7 +274,7 @@ class InfantryRobot(BaseAgent):
                     near=0.01,
                     far=100,
                     entity_uid="camera_link",
-                    shader_pack="minimal",
+                    shader_config=lidar_shader_config,
                 )
             )
             sensors.append(
@@ -243,7 +287,7 @@ class InfantryRobot(BaseAgent):
                     near=0.01,
                     far=100,
                     entity_uid="camera_link",
-                    shader_pack="minimal",
+                    shader_config=lidar_shader_config,
                 )
             )
 
