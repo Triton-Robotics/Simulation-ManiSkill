@@ -29,6 +29,7 @@ class Sim_Node(Node):
         self.declare_parameter("cv_fov_vertical", 20)
         self.declare_parameter("cv_exposure", 0.005)
         self.declare_parameter("cv_ray_tracing", False)
+        # TODO add ray tracing config values as ros params
         # TODO add cv camera matrix parameter
 
         # lidar params
