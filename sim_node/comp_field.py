@@ -10,6 +10,8 @@ from sim_node import infantry_robot
 from mani_skill.agents.multi_agent import MultiAgent
 from mani_skill.sensors.camera import *
 from mani_skill.sensors.depth_camera import StereoDepthCameraConfig, StereoDepthCamera
+from mani_skill.sensors.camera import Camera
+from mani_skill.utils.structs.render_camera import RenderCamera
 
 package_dir = get_package_share_directory("sim_node")
 base_field_path = "resource/models/field/"
@@ -175,3 +177,13 @@ class CompFieldEnv(BaseEnv):
                 flipped_actor = builder.build(name=(name + "_flipped"))
                 # make field not collide with itself
                 flipped_actor.set_collision_group_bit(group=2, bit_idx=2, bit=1)
+
+    def _after_reconfigure(self, options):
+        super()._after_reconfigure(options)
+
+        if "user" in options:
+            for name, sensor in self._sensors.items():
+                if "cv_camera" in name:
+                    sensor: Camera
+                    render_cam: RenderCamera = sensor.camera
+                    render_cam.set_property("exposure", options["user"]["cv_exposure"])

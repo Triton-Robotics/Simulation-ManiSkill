@@ -27,6 +27,7 @@ class Sim_Node(Node):
         self.declare_parameter("cv_resolution_y", 1200)
         self.declare_parameter("cv_fov_horizontal", 31)
         self.declare_parameter("cv_fov_vertical", 20)
+        self.declare_parameter("cv_exposure", 0.005)
         self.declare_parameter("cv_shader_pack", "default")
         # TODO add cv camera matrix parameter
 
@@ -69,6 +70,9 @@ class Sim_Node(Node):
             .get_parameter_value()
             .string_value,
             human_gui=self.get_parameter("human_gui").get_parameter_value().bool_value,
+            cv_exposure=self.get_parameter("cv_exposure")
+            .get_parameter_value()
+            .double_value,
             primary_robot=dict(
                 # cv cam options
                 enable_cv_cam=self.get_parameter("enable_cv_cam")
