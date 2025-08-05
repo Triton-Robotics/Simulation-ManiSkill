@@ -184,7 +184,7 @@ class InfantryRobot(BaseAgent):
             sensors.append(
                 CameraConfig(
                     uid="cv_camera_" + str(self._agent_idx),
-                    pose=sapien.Pose(p=[0, 0, 0], q=[0.5, -0.5, -0.5, -0.5]),
+                    pose=sapien.Pose(p=[0, 0, 0], q=[1, 0, 0, 0]),
                     width=width,
                     height=height,
                     intrinsic=cv_camera_intrinsics,
@@ -201,22 +201,21 @@ class InfantryRobot(BaseAgent):
 
         if self.options.get("enable_lidar", False):
             # lidar simulated with multiple camera sensors
-            lidar_pose = [0, 0.2, 0]
-            pose0 = sapien.Pose(lidar_pose)
+            pose0 = sapien.Pose()
             # left cam
-            pose0.set_rpy([0, np.deg2rad(-45), 0])
+            pose0.set_rpy([0, np.deg2rad(-45), np.deg2rad(0)])
 
             # bottom cam
-            pose1 = sapien.Pose(lidar_pose)
-            pose1.set_rpy([0, np.deg2rad(-45), np.deg2rad(-90)])
+            pose1 = sapien.Pose()
+            pose1.set_rpy([0, np.deg2rad(-45), np.deg2rad(90)])
 
             # right cam
-            pose2 = sapien.Pose(lidar_pose)
-            pose2.set_rpy([0, np.deg2rad(-45), np.deg2rad(-180)])
+            pose2 = sapien.Pose()
+            pose2.set_rpy([0, np.deg2rad(-45), np.deg2rad(180)])
 
             # top cam
-            pose3 = sapien.Pose(lidar_pose)
-            pose3.set_rpy([0, np.deg2rad(-45), np.deg2rad(-270)])
+            pose3 = sapien.Pose()
+            pose3.set_rpy([0, np.deg2rad(-45), np.deg2rad(270)])
 
             lidar_width_resolution = self.options["lidar_pointcloud_resolution"]
             lidar_height_resolution = self.options["lidar_pointcloud_resolution"]
@@ -256,7 +255,7 @@ class InfantryRobot(BaseAgent):
                     intrinsic=lidar_camera_intrinsics,
                     near=0.01,
                     far=100,
-                    entity_uid="camera_link",
+                    entity_uid="lidar_link",
                     shader_config=lidar_shader_config,
                 )
             )
@@ -269,7 +268,7 @@ class InfantryRobot(BaseAgent):
                     intrinsic=lidar_camera_intrinsics,
                     near=0.01,
                     far=100,
-                    entity_uid="camera_link",
+                    entity_uid="lidar_link",
                     shader_config=lidar_shader_config,
                 )
             )
@@ -282,7 +281,7 @@ class InfantryRobot(BaseAgent):
                     intrinsic=lidar_camera_intrinsics,
                     near=0.01,
                     far=100,
-                    entity_uid="camera_link",
+                    entity_uid="lidar_link",
                     shader_config=lidar_shader_config,
                 )
             )
@@ -295,7 +294,7 @@ class InfantryRobot(BaseAgent):
                     intrinsic=lidar_camera_intrinsics,
                     near=0.01,
                     far=100,
-                    entity_uid="camera_link",
+                    entity_uid="lidar_link",
                     shader_config=lidar_shader_config,
                 )
             )
