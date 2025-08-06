@@ -95,7 +95,6 @@ class Simulation:
             ),
         }
 
-        print(self.env.control_freq, self.env.sim_freq)
         obs, reward, terminated, truncated, info = self.env.step(action=action)
         done = terminated or truncated
         if self.should_render_gui:
