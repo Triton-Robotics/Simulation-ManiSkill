@@ -40,6 +40,9 @@ class Sim_Node(Node):
         # general simulation params
         self.declare_parameter("spawn_scenario", "center_1v1")
         self.declare_parameter("human_gui", True)
+        self.declare_parameter("control_freq", 150)
+        self.declare_parameter("sim_freq", 300)
+        self.declare_parameter("sim_time_scale", 1.0)
 
         self.primary_robot_teleop_sub = self.create_subscription(
             SimTeleopInput,
@@ -64,8 +67,15 @@ class Sim_Node(Node):
         qos_profile = rclpy.qos.qos_profile_sensor_data
         qos_profile.depth = 1
         self.image_pub = self.create_publisher(Image, "camera/image", qos_profile)
-        # 10ms
-        self.simulation_timer = self.create_timer(0.01, self.simulation_callback)
+        control_freq = (
+            self.get_parameter("control_freq").get_parameter_value().integer_value
+        )
+        sim_time_scale = (
+            self.get_parameter("sim_time_scale").get_parameter_value().double_value
+        )
+        self.simulation_timer = self.create_timer(
+            1 / (control_freq * sim_time_scale), self.simulation_callback
+        )
         self.ros_clock_pub = self.create_publisher(
             msg_type=Clock, topic="/clock", qos_profile=10
         )
@@ -82,6 +92,10 @@ class Sim_Node(Node):
             cv_exposure=self.get_parameter("cv_exposure")
             .get_parameter_value()
             .double_value,
+            control_freq=self.get_parameter("control_freq")
+            .get_parameter_value()
+            .integer_value,
+            sim_freq=self.get_parameter("sim_freq").get_parameter_value().integer_value,
             primary_robot=dict(
                 # cv cam options
                 enable_cv_cam=self.get_parameter("enable_cv_cam")

@@ -42,3 +42,5 @@ l = right
 # NOTE
 
 enabling human gui has a significant performance hit, especially when trying to run faster than real time. Whenever possible disable the `human_gui` ros parameter
+
+some combinations of control_freq, sim_freq, sim_time_scale make the env.step() function take longer than normal to execute in real time. Unsure why

@@ -27,8 +27,8 @@ class Simulation:
         self.should_render_gui = self.options["user"]["human_gui"]
 
         sim_config = SimConfig()
-        sim_config.control_freq = 150
-        sim_config.sim_freq = 300
+        sim_config.control_freq = self.options["user"]["control_freq"]
+        sim_config.sim_freq = self.options["user"]["sim_freq"]
         self.env: BaseEnv = gym.make(
             "comp_field",  # This should map to your registered environment
             render_mode=("human" if self.should_render_gui else None),
@@ -95,6 +95,7 @@ class Simulation:
             ),
         }
 
+        print(self.env.control_freq, self.env.sim_freq)
         obs, reward, terminated, truncated, info = self.env.step(action=action)
         done = terminated or truncated
         if self.should_render_gui:
