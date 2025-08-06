@@ -1,3 +1,4 @@
+from typing import Dict
 import sapien
 
 from mani_skill.envs.sapien_env import BaseEnv
@@ -43,6 +44,11 @@ class CompFieldEnv(BaseEnv):
 
     def __init__(self, *args, robot_uids=("infantry"), **kwargs):
         super().__init__(*args, robot_uids=robot_uids, **kwargs)
+
+    def _get_obs_extra(self, info: Dict):
+        return dict(
+            sim_timestamp=(info["elapsed_steps"] * self.control_timestep).item()
+        )
 
     def _load_agent(self, options: dict):
         user_options = options.get("user", dict())

@@ -6,6 +6,7 @@ from mani_skill.agents.multi_agent import MultiAgent
 from sim_node import comp_field
 import numpy as np
 from sim_node import utils
+from mani_skill.utils.structs import SimConfig
 
 SPAWN_SCENARIO_KEYFRAME_MAPPING: dict = dict(
     center_1v1=dict(
@@ -24,11 +25,16 @@ class Simulation:
     def __init__(self, options: dict, seed=2930):
         self.options = dict(reconfigure=True, user=options)
         self.should_render_gui = self.options["user"]["human_gui"]
+
+        sim_config = SimConfig()
+        sim_config.control_freq = 150
+        sim_config.sim_freq = 300
         self.env: BaseEnv = gym.make(
             "comp_field",  # This should map to your registered environment
             render_mode=("human" if self.should_render_gui else None),
             reward_mode="sparse",
             obs_mode="state_dict+rgb+segmentation+position",
+            sim_config=sim_config,
         )
 
         spawn_scenario: str = self.options["user"]["spawn_scenario"]

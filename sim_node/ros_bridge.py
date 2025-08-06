@@ -9,6 +9,7 @@ from sim_node import simulation
 from sensor_msgs.msg import Image, PointCloud2, PointField
 from std_msgs.msg import Header
 from sensor_msgs_py import point_cloud2  # pointcloud utilizes
+from rosgraph_msgs.msg import Clock
 from sim_node import utils, constants
 import numpy as np
 
@@ -65,6 +66,13 @@ class Sim_Node(Node):
         self.image_pub = self.create_publisher(Image, "camera/image", qos_profile)
         # 10ms
         self.simulation_timer = self.create_timer(0.01, self.simulation_callback)
+        self.ros_clock_pub = self.create_publisher(
+            msg_type=Clock, topic="/clock", qos_profile=10
+        )
+        self.clock_msg = Clock()
+        self.clock_msg.clock.sec = 0
+        self.clock_msg.clock.nanosec = 0
+
         options = dict(
             # general simulation options
             spawn_scenario=self.get_parameter("spawn_scenario")
@@ -187,6 +195,13 @@ class Sim_Node(Node):
             self.pointcloud_pub.publish(msg)
             t2 = time.time()
             print("publishing pointcloud: ", (t2 - t1) * 1000, "ms")
+
+        # sync ros to sim time
+        sim_timestamp = obs["extra"]["sim_timestamp"]
+        self.clock_msg.clock.sec = int(sim_timestamp)
+        # nanosec only contains the fractional part of the timestamp
+        self.clock_msg.clock.nanosec = int((sim_timestamp % 1) * 1e9)
+        self.ros_clock_pub.publish(self.clock_msg)
 
         end = time.time()
         print("fps (theoretical): ", 1 / (end - start))

@@ -38,3 +38,7 @@ l = right
 8 = 75% clockwise rotation
 9 = 100% clockwise rotation
 ```
+
+# NOTE
+
+enabling human gui has a significant performance hit, especially when trying to run faster than real time. Whenever possible disable the `human_gui` ros parameter
