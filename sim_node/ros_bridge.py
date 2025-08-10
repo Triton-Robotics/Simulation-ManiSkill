@@ -67,6 +67,10 @@ class Sim_Node(Node):
         qos_profile = rclpy.qos.qos_profile_sensor_data
         qos_profile.depth = 1
         self.image_pub = self.create_publisher(Image, "camera/image", qos_profile)
+        self.image_segmentation_pub = self.create_publisher(
+            Image, "camera/segmentation", qos_profile
+        )
+
         control_freq = (
             self.get_parameter("control_freq").get_parameter_value().integer_value
         )
@@ -181,6 +185,7 @@ class Sim_Node(Node):
 
             rgb_array = rgb_tensor.numpy(force=True)
             img_msg = self.cv_bridge.cv2_to_imgmsg(rgb_array, encoding="rgb8")
+            # TODO FIXME idk if self.getclock correctly uses sim time here from /clock
             img_msg.header.stamp = self.get_clock().now().to_msg()
             t2 = time.time()
             print("cv process img: ", (t2 - t1) * 1000, "ms")
@@ -189,6 +194,18 @@ class Sim_Node(Node):
             self.image_pub.publish(img_msg)
             t2 = time.time()
             print("cv pub: ", (t2 - t1) * 1000, "ms")
+
+            segmentation_tensor = obs["sensor_data"]["cv_camera_0"]["segmentation"]
+            segmentation_tensor: torch.Tensor
+            segmentation_tensor = segmentation_tensor.squeeze(0)
+
+            segmentation_array = segmentation_tensor.numpy(force=True)
+            segmentation_array = segmentation_array.astype(np.uint16)
+            seg_msg = self.cv_bridge.cv2_to_imgmsg(
+                segmentation_array, encoding="mono16"
+            )
+            seg_msg.header.stamp = self.get_clock().now().to_msg()
+            self.image_segmentation_pub.publish(seg_msg)
 
         if self.get_parameter("enable_lidar").get_parameter_value().bool_value:
             t1 = time.time()

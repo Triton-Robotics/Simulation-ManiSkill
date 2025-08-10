@@ -157,10 +157,12 @@ class InfantryRobot(BaseAgent):
             # taken from Shaders.py in maniskill repo
             cv_texture_names = {
                 "Color": ["rgb"],
+                "Segmentation": ["segmentation"],
             }
 
             cv_texture_transforms = {
                 "Color": lambda data: {"rgb": (data[..., :3] * 255).to(torch.uint8)},
+                "Segmentation": lambda data: {"segmentation": data[..., 1][..., None]},
             }
 
             # TODO make a boolean raytracing rosparam to toggle between rt and non rt configs
