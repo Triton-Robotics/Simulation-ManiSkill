@@ -80,7 +80,7 @@ class InfantryRobot(BaseAgent):
         visual_block = lightbar_link.render_shapes[0]
         for shape in visual_block:
             for part in shape.parts:
-                part.material.set_base_color([0, 0, 0.1, 1])
+                part.material.set_base_color([0, 0, 1, 1])
                 part.material.set_emission([0, 0, 100, 100])
                 part.material.set_emission_texture(None)
                 part.material.set_metallic_texture(None)
