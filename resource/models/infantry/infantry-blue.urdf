@@ -63,7 +63,7 @@ Stephen Brawner (brawner@gmail.com)
                 iyz="0.00748853471499854"
                 izz="0.562657367224856" />
         </inertial>
-        <visual>
+        <!-- <visual>
             <origin
                 xyz="0 0 0"
                 rpy="0 0 0" />
@@ -76,7 +76,7 @@ Stephen Brawner (brawner@gmail.com)
                 <color
                     rgba="0.984 0.737 0.020 1" />
             </material>
-        </visual>
+        </visual> -->
         <collision>
             <origin
                 xyz="0 -0.17 0"
