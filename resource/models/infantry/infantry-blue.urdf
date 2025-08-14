@@ -385,8 +385,8 @@ Stephen Brawner (brawner@gmail.com)
         name="numbers_joint"
         type="fixed">
         <origin
-            xyz="-0.007907 0.063961 -0.045004"
-            rpy="3.1416 1.5708 0" />
+            xyz="-0.007907 0.053961 -0.05"
+            rpy="0 0 0" />
         <parent
             link="plates_link" />
         <child
