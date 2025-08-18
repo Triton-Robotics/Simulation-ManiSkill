@@ -2,7 +2,7 @@ import time
 import rclpy
 from rclpy.node import Node
 from tr_messages.srv import WriteSerial, ListenSerial
-from tr_messages.msg import SimTeleopInput
+from tr_messages.msg import SimTeleopInput, RobotGroundTruth, SimGroundTruth
 from sensor_msgs.msg import Image
 from sim_node import simulation
 
@@ -10,6 +10,8 @@ from sensor_msgs.msg import Image, PointCloud2, PointField
 from std_msgs.msg import Header
 from sensor_msgs_py import point_cloud2  # pointcloud utilizes
 from rosgraph_msgs.msg import Clock
+from tf2_msgs.msg import TFMessage
+from geometry_msgs.msg import TransformStamped
 from sim_node import utils, constants
 import numpy as np
 
@@ -63,6 +65,10 @@ class Sim_Node(Node):
         self.listen_service = self.create_service(
             ListenSerial, "read_robot_state", self.read_robot_state
         )
+
+        self.ground_truth_pub = self.create_publisher(
+            SimGroundTruth, "sim/ground_truth", 10
+        )
         self.pointcloud_pub = self.create_publisher(PointCloud2, "pointcloud", 10)
         qos_profile = rclpy.qos.qos_profile_sensor_data
         qos_profile.depth = 1
@@ -73,6 +79,7 @@ class Sim_Node(Node):
         sim_time_scale = (
             self.get_parameter("sim_time_scale").get_parameter_value().double_value
         )
+        # TODO make sure this is set correctly
         self.simulation_timer = self.create_timer(
             1 / (control_freq * sim_time_scale), self.simulation_callback
         )
@@ -220,6 +227,19 @@ class Sim_Node(Node):
         end = time.time()
         print("fps (theoretical): ", 1 / (end - start))
         print("time taken: ", (end - start) * 1000, "ms\n---\n")
+
+        primary_robot_msg = RobotGroundTruth()
+        utils.populate_robot_ground_truth_msg(
+            msg=primary_robot_msg,
+            obs=obs["extra"]["primary_robot"],
+        )
+
+        sim_ground_truth_msg = SimGroundTruth()
+        sim_ground_truth_msg.header.stamp = self.clock_msg.clock
+        sim_ground_truth_msg.header.frame_id = "map"
+
+        sim_ground_truth_msg.robot_ground_truths = [primary_robot_msg]
+        self.ground_truth_pub.publish(sim_ground_truth_msg)
 
     def read_robot_state(self, request, response):
         # TODO make a buffer and respond based off the time in the request
