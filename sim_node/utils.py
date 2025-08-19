@@ -96,6 +96,12 @@ def populate_robot_ground_truth_msg(msg: RobotGroundTruth, obs: dict) -> None:
     populate_pose_msg_from_list(msg.camera_pose, obs["camera_pose"])
     populate_pose_msg_from_list(msg.lidar_pose, obs["lidar_pose"])
 
+    msg.armor_panel_poses = []
+    for panel in obs["panel_poses"]:
+        p = Pose()
+        populate_pose_msg_from_list(p, panel)
+        msg.armor_panel_poses.append(p)
+
 
 def populate_pose_msg_from_list(msg: Pose, pose_list: list) -> None:
     msg.position.x = pose_list[0]

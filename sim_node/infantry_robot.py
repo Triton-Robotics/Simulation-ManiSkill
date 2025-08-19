@@ -301,27 +301,32 @@ class InfantryRobot(BaseAgent):
 
         return sensors
 
-    def get_armor_panel_poses(self) -> list[sapien.Pose]:
+    def get_armor_panel_poses(self) -> list[Pose]:
         plates_link = self.robot.links_map["base_link"]
         radius = 0.23
         height = -0.08
 
-        delta_poses = [
+        sapien_poses = [
             sapien.Pose(p=[radius, height, 0]),
             sapien.Pose(p=[-radius, height, 0]),
             sapien.Pose(p=[0, height, radius]),
             sapien.Pose(p=[0, height, -radius]),
         ]
 
-        delta_poses[0].set_rpy([0, np.deg2rad(90), 0])
-        delta_poses[1].set_rpy([0, np.deg2rad(180), 0])
-        delta_poses[2].set_rpy([0, np.deg2rad(-90), 0])
-        delta_poses[3].set_rpy([0, np.deg2rad(90), 0])
-        # plates_link_pose = sapien.Pose(p=plates_link.pose.p, q=plates_link.pose.q)
+        sapien_poses[0].set_rpy([0, np.deg2rad(90), 0])
+        sapien_poses[1].set_rpy([0, np.deg2rad(180), 0])
+        sapien_poses[2].set_rpy([0, np.deg2rad(-90), 0])
+        sapien_poses[3].set_rpy([0, np.deg2rad(90), 0])
 
-        return [plates_link.pose.sp * dp for dp in delta_poses]
+        delta_poses = [Pose.create(sp) for sp in sapien_poses]
+        # TODO using debug cube these armor panel poses look slightly off
+        return [plates_link.pose * dp for dp in delta_poses]
 
     def get_ground_truth_obs(self) -> dict:
+        panel_poses = [
+            pose.raw_pose.squeeze(0).tolist() for pose in self.get_armor_panel_poses()
+        ]
+
         # squeeze(0) because poses are batched but we only have 1 environment
         return dict(
             chassis_pose=self.robot.links_map["base_link"]
@@ -336,4 +341,5 @@ class InfantryRobot(BaseAgent):
             lidar_pose=self.robot.links_map["lidar_link"]
             .pose.raw_pose.squeeze(0)
             .tolist(),
+            panel_poses=panel_poses,
         )
