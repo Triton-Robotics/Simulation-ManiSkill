@@ -92,6 +92,9 @@ def sensor_data_to_pointcloud(observation: Dict):
 # ex: obs = obs["extra"]["primary_robot"]
 def populate_robot_ground_truth_msg(msg: RobotGroundTruth, obs: dict) -> None:
     populate_pose_msg_from_list(msg.chassis_pose, obs["chassis_pose"])
+    populate_pose_msg_from_list(msg.turret_pose, obs["turret_pose"])
+    populate_pose_msg_from_list(msg.camera_pose, obs["camera_pose"])
+    populate_pose_msg_from_list(msg.lidar_pose, obs["lidar_pose"])
 
 
 def populate_pose_msg_from_list(msg: Pose, pose_list: list) -> None:
