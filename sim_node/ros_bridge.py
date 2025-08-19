@@ -227,12 +227,17 @@ class Sim_Node(Node):
             msg=primary_robot_msg,
             obs=obs["extra"]["primary_robot"],
         )
+        secondary_robot_msg = RobotGroundTruth()
+        utils.populate_robot_ground_truth_msg(
+            msg=secondary_robot_msg,
+            obs=obs["extra"]["secondary_robot"],
+        )
+        sim_ground_truth_msg.primary_robot = primary_robot_msg
+        sim_ground_truth_msg.secondary_robot = secondary_robot_msg
 
-        sim_ground_truth_msg.robot_ground_truths = [primary_robot_msg]
         end = time.perf_counter()
         sim_ground_truth_msg.total_time = (end - start) * 1000
         sim_ground_truth_msg.theoretical_fps = 1 / (end - start)
-
         self.ground_truth_pub.publish(sim_ground_truth_msg)
 
     def read_robot_state(self, request, response):

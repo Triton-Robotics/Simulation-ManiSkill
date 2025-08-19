@@ -50,6 +50,7 @@ class CompFieldEnv(BaseEnv):
         return dict(
             sim_timestamp=(info["elapsed_steps"] * self.control_timestep).item(),
             primary_robot=self.agent.agents[0].get_ground_truth_obs(),
+            secondary_robot=self.agent.agents[1].get_ground_truth_obs(),
         )
 
     def _load_agent(self, options: dict):
