@@ -67,7 +67,7 @@ class Sim_Node(Node):
         )
 
         self.ground_truth_pub = self.create_publisher(
-            SimGroundTruth, "sim/ground_truth", 10
+            SimGroundTruth, "simulation/ground_truth", 10
         )
         self.pointcloud_pub = self.create_publisher(PointCloud2, "pointcloud", 10)
         qos_profile = rclpy.qos.qos_profile_sensor_data
