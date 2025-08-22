@@ -192,7 +192,7 @@ class Sim_Node(Node):
 
             rgb_array = rgb_tensor.numpy(force=True)
             img_msg = self.cv_bridge.cv2_to_imgmsg(rgb_array, encoding="rgb8")
-            img_msg.header.stamp = self.get_clock().now().to_msg()
+            img_msg.header.stamp = self.clock_msg.clock
             t2 = time.perf_counter()
             sim_ground_truth_msg.cv_process_img = (t2 - t1) * 1000
 
