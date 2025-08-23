@@ -294,6 +294,7 @@ class Sim_Node(Node):
     def points_to_ros_pointcloud2(self, points):
 
         header = Header()
+        # TODO FIX ME
         header.stamp = self.get_clock().now().to_msg()
         header.frame_id = "map"
 
