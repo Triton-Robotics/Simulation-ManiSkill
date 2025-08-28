@@ -45,6 +45,7 @@ class Sim_Node(Node):
         self.declare_parameter("control_freq", 150)
         self.declare_parameter("sim_freq", 300)
         self.declare_parameter("sim_time_scale", 1.0)
+        self.declare_parameter("cpu_sim", False)
 
         self.primary_robot_teleop_sub = self.create_subscription(
             SimTeleopInput,
@@ -103,6 +104,7 @@ class Sim_Node(Node):
             .get_parameter_value()
             .integer_value,
             sim_freq=self.get_parameter("sim_freq").get_parameter_value().integer_value,
+            cpu_sim=self.get_parameter("cpu_sim").get_parameter_value().bool_value,
             primary_robot=dict(
                 # cv cam options
                 enable_cv_cam=self.get_parameter("enable_cv_cam")

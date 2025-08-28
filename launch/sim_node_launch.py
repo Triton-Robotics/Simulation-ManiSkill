@@ -28,6 +28,10 @@ def generate_launch_description():
             "sim_freq",
             default_value="300",
         ),
+        DeclareLaunchArgument(
+            "cpu_sim",
+            default_value="false",
+        ),
         # ---
         # CV Camera parameters
         DeclareLaunchArgument(
@@ -86,6 +90,7 @@ def generate_launch_description():
                 "sim_time_scale": LaunchConfiguration("sim_time_scale"),
                 "control_freq": LaunchConfiguration("control_freq"),
                 "sim_freq": LaunchConfiguration("sim_freq"),
+                "cpu_sim": LaunchConfiguration("cpu_sim"),
                 "enable_cv_cam": LaunchConfiguration("enable_cv_cam"),
                 "cv_exposure": LaunchConfiguration("cv_exposure"),
                 "cv_fov_horizontal": LaunchConfiguration("cv_fov_horizontal"),
