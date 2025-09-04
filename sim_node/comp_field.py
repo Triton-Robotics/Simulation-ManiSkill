@@ -82,8 +82,8 @@ class CompFieldEnv(BaseEnv):
     ) -> None | infantry_robot.Tensor:
         plate_poses = self.agent.agents[0].get_armor_panel_poses()
 
-        cube = self.scene.actors["debug_cube"]
-        cube.set_pose(plate_poses[3])
+        # cube = self.scene.actors["debug_cube"]
+        # cube.set_pose(plate_poses[3])
 
         return super()._step_action(action)
 
@@ -165,10 +165,10 @@ class CompFieldEnv(BaseEnv):
         self.scene.human_render_cameras = self._human_render_cameras
 
     def _load_scene(self, options: dict):
-        debug_builder = self.scene.create_actor_builder()
-        debug_builder.add_box_visual(half_size=[0.02, 0.02, 0.02])
-        debug_builder.set_initial_pose(sapien.Pose())
-        debug_cube = debug_builder.build_static(name="debug_cube")
+        # debug_builder = self.scene.create_actor_builder()
+        # debug_builder.add_box_visual(half_size=[0.02, 0.02, 0.02])
+        # debug_builder.set_initial_pose(sapien.Pose())
+        # debug_cube = debug_builder.build_static(name="debug_cube")
 
         field_visual_builder = self.scene.create_actor_builder()
 
