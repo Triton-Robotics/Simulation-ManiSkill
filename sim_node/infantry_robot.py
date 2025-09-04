@@ -20,7 +20,7 @@ package_dir = get_package_share_directory("sim_node")
 class InfantryRobot(BaseAgent):
     uid = "infantry"
     urdf_path = str(
-        os.path.join(package_dir, "resource/models/infantry/infantry-blue.urdf")
+        os.path.join(package_dir, "resource/models/infantry/infantry.urdf")
     )
 
     # TODO ideally we define a srdf file instead of disabling all collisions. That way we only disable problematic collisions and
