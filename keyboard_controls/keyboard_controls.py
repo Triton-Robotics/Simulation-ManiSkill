@@ -159,13 +159,13 @@ class KeyboardControls(Node):
             self.secondary_robot_teleop_input.y_vel = 0.0
 
     def timer_callback(self):
-        print(
-            "publishing",
-            "primary: ",
-            self.primary_robot_teleop_input,
-            "secondary: ",
-            self.secondary_robot_teleop_input,
-        )
+        # print(
+        #     "publishing",
+        #     "primary: "
+        #     self.primary_robot_teleop_input,
+        #     "secondary: ",
+        #     self.secondary_robot_teleop_input,
+        # )
         primary_robot_msg = SimTeleopInput()
         primary_robot_msg.x_vel = self.primary_robot_teleop_input.x_vel
         primary_robot_msg.y_vel = self.primary_robot_teleop_input.y_vel

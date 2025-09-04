@@ -2,7 +2,7 @@ import time
 import rclpy
 from rclpy.node import Node
 from tr_messages.srv import WriteSerial, ListenSerial
-from tr_messages.msg import SimTeleopInput
+from tr_messages.msg import SimTeleopInput, RobotGroundTruth, SimGroundTruth
 from sensor_msgs.msg import Image
 from sim_node import simulation
 
@@ -10,6 +10,8 @@ from sensor_msgs.msg import Image, PointCloud2, PointField
 from std_msgs.msg import Header
 from sensor_msgs_py import point_cloud2  # pointcloud utilizes
 from rosgraph_msgs.msg import Clock
+from tf2_msgs.msg import TFMessage
+from geometry_msgs.msg import TransformStamped
 from sim_node import utils, constants
 import numpy as np
 
@@ -43,6 +45,7 @@ class Sim_Node(Node):
         self.declare_parameter("control_freq", 150)
         self.declare_parameter("sim_freq", 300)
         self.declare_parameter("sim_time_scale", 1.0)
+        self.declare_parameter("cpu_sim", False)
 
         self.primary_robot_teleop_sub = self.create_subscription(
             SimTeleopInput,
@@ -63,6 +66,10 @@ class Sim_Node(Node):
         self.listen_service = self.create_service(
             ListenSerial, "read_robot_state", self.read_robot_state
         )
+
+        self.ground_truth_pub = self.create_publisher(
+            SimGroundTruth, "simulation/ground_truth", 10
+        )
         self.pointcloud_pub = self.create_publisher(PointCloud2, "pointcloud", 10)
         qos_profile = rclpy.qos.qos_profile_sensor_data
         qos_profile.depth = 1
@@ -73,6 +80,7 @@ class Sim_Node(Node):
         sim_time_scale = (
             self.get_parameter("sim_time_scale").get_parameter_value().double_value
         )
+        # TODO make sure this is set correctly
         self.simulation_timer = self.create_timer(
             1 / (control_freq * sim_time_scale), self.simulation_callback
         )
@@ -96,6 +104,7 @@ class Sim_Node(Node):
             .get_parameter_value()
             .integer_value,
             sim_freq=self.get_parameter("sim_freq").get_parameter_value().integer_value,
+            cpu_sim=self.get_parameter("cpu_sim").get_parameter_value().bool_value,
             primary_robot=dict(
                 # cv cam options
                 enable_cv_cam=self.get_parameter("enable_cv_cam")
@@ -141,8 +150,10 @@ class Sim_Node(Node):
         self.cv_bridge = CvBridge()
 
     def simulation_callback(self):
-        start = time.time()
-        t1 = time.time()
+        start = time.perf_counter()
+        sim_ground_truth_msg = SimGroundTruth()
+        sim_ground_truth_msg.header.stamp = self.clock_msg.clock
+        sim_ground_truth_msg.header.frame_id = "map"
 
         primary_robot_state = None
         if self.control_mode == "programmatic":
@@ -152,16 +163,18 @@ class Sim_Node(Node):
         else:
             RuntimeError(f"invalid control_mode. {self.control_mode}")
 
+        t1 = time.perf_counter()
         obs = self.simulation.step(
             primary_robot_state=primary_robot_state,
             secondary_robot_state=self.secondary_robot_teleop_desired_state,
         )
-        t2 = time.time()
-        print("step sim: ", (t2 - t1) * 1000, "ms")
+        t2 = time.perf_counter()
+        sim_ground_truth_msg.step_sim = (t2 - t1) * 1000
 
         robot_state_position: Tensor = obs["agent"]["infantry-0"]["qpos"]
         robot_state_position = robot_state_position.squeeze(0)  # remove batch dimension
 
+        # FIX ME THIS IS INCORRECT
         robot_state_velocity: Tensor = obs["agent"]["infantry-0"]["qvel"]
         robot_state_velocity = robot_state_velocity.squeeze(0)  # remove batch dimension
 
@@ -174,41 +187,35 @@ class Sim_Node(Node):
         )
 
         if self.get_parameter("enable_cv_cam").get_parameter_value().bool_value:
-            t1 = time.time()
+            t1 = time.perf_counter()
             rgb_tensor = obs["sensor_data"]["cv_camera_0"]["rgb"]
             rgb_tensor: torch.Tensor
             rgb_tensor = rgb_tensor.squeeze(0)  # remove batch dimension
 
             rgb_array = rgb_tensor.numpy(force=True)
             img_msg = self.cv_bridge.cv2_to_imgmsg(rgb_array, encoding="rgb8")
-            img_msg.header.stamp = self.get_clock().now().to_msg()
-            t2 = time.time()
-            print("cv process img: ", (t2 - t1) * 1000, "ms")
+            img_msg.header.stamp = self.clock_msg.clock
+            t2 = time.perf_counter()
+            sim_ground_truth_msg.cv_process_img = (t2 - t1) * 1000
 
-            t1 = time.time()
+            t1 = time.perf_counter()
             self.image_pub.publish(img_msg)
-            t2 = time.time()
-            print("cv pub: ", (t2 - t1) * 1000, "ms")
+            t2 = time.perf_counter()
+            sim_ground_truth_msg.cv_pub = (t2 - t1) * 1000
 
         if self.get_parameter("enable_lidar").get_parameter_value().bool_value:
-            t1 = time.time()
+            t1 = time.perf_counter()
             pointcloud = utils.sensor_data_to_pointcloud(obs)
-            t2 = time.time()
-            print("raw to pointcloud: ", (t2 - t1) * 1000, "ms")
 
-            t1 = time.time()
             xyzw = pointcloud["xyzw"]
             xyzw = xyzw.squeeze(0)
             valid_mask = xyzw[:, 3] == 1
             points = xyzw[valid_mask, :3]
             msg = self.points_to_ros_pointcloud2(points)
-            t2 = time.time()
-            print("pointcloud to ros: ", (t2 - t1) * 1000, "ms")
 
-            t1 = time.time()
             self.pointcloud_pub.publish(msg)
-            t2 = time.time()
-            print("publishing pointcloud: ", (t2 - t1) * 1000, "ms")
+            t2 = time.perf_counter()
+            sim_ground_truth_msg.pointcloud = (t2 - t1) * 1000
 
         # sync ros to sim time
         sim_timestamp = obs["extra"]["sim_timestamp"]
@@ -217,9 +224,23 @@ class Sim_Node(Node):
         self.clock_msg.clock.nanosec = int((sim_timestamp % 1) * 1e9)
         self.ros_clock_pub.publish(self.clock_msg)
 
-        end = time.time()
-        print("fps (theoretical): ", 1 / (end - start))
-        print("time taken: ", (end - start) * 1000, "ms\n---\n")
+        primary_robot_msg = RobotGroundTruth()
+        utils.populate_robot_ground_truth_msg(
+            msg=primary_robot_msg,
+            obs=obs["extra"]["primary_robot"],
+        )
+        secondary_robot_msg = RobotGroundTruth()
+        utils.populate_robot_ground_truth_msg(
+            msg=secondary_robot_msg,
+            obs=obs["extra"]["secondary_robot"],
+        )
+        sim_ground_truth_msg.primary_robot = primary_robot_msg
+        sim_ground_truth_msg.secondary_robot = secondary_robot_msg
+
+        end = time.perf_counter()
+        sim_ground_truth_msg.total_time = (end - start) * 1000
+        sim_ground_truth_msg.theoretical_fps = 1 / (end - start)
+        self.ground_truth_pub.publish(sim_ground_truth_msg)
 
     def read_robot_state(self, request, response):
         # TODO make a buffer and respond based off the time in the request
@@ -275,6 +296,7 @@ class Sim_Node(Node):
     def points_to_ros_pointcloud2(self, points):
 
         header = Header()
+        # TODO FIX ME
         header.stamp = self.get_clock().now().to_msg()
         header.frame_id = "map"
 

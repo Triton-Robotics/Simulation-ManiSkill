@@ -8,6 +8,9 @@ from mani_skill.sensors.base_sensor import BaseSensor, BaseSensorConfig
 from mani_skill.sensors.camera import Camera
 from mani_skill.utils import common
 
+from tr_messages.msg import RobotGroundTruth, SimGroundTruth
+from geometry_msgs.msg import Pose
+
 
 class robot_state:
     def __init__(
@@ -83,3 +86,29 @@ def sensor_data_to_pointcloud(observation: Dict):
         pointcloud_obs[key] = torch.concat(value, axis=1)
 
     return pointcloud_obs
+
+
+# obs should be the dict of the specific robot from extra obs that this msg belongs to
+# ex: obs = obs["extra"]["primary_robot"]
+def populate_robot_ground_truth_msg(msg: RobotGroundTruth, obs: dict) -> None:
+    populate_pose_msg_from_list(msg.chassis_pose, obs["chassis_pose"])
+    populate_pose_msg_from_list(msg.turret_pose, obs["turret_pose"])
+    populate_pose_msg_from_list(msg.camera_pose, obs["camera_pose"])
+    populate_pose_msg_from_list(msg.lidar_pose, obs["lidar_pose"])
+
+    msg.armor_panel_poses = []
+    for panel in obs["panel_poses"]:
+        p = Pose()
+        populate_pose_msg_from_list(p, panel)
+        msg.armor_panel_poses.append(p)
+
+
+def populate_pose_msg_from_list(msg: Pose, pose_list: list) -> None:
+    msg.position.x = pose_list[0]
+    msg.position.y = pose_list[1]
+    msg.position.z = pose_list[2]
+
+    msg.orientation.w = pose_list[3]
+    msg.orientation.x = pose_list[4]
+    msg.orientation.y = pose_list[5]
+    msg.orientation.z = pose_list[6]

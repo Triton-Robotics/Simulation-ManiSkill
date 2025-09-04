@@ -13,6 +13,7 @@ from mani_skill.sensors.camera import *
 from mani_skill.sensors.depth_camera import StereoDepthCameraConfig, StereoDepthCamera
 from mani_skill.sensors.camera import Camera
 from mani_skill.utils.structs.render_camera import RenderCamera
+from mani_skill.utils.structs.pose import Pose
 
 package_dir = get_package_share_directory("sim_node")
 base_field_path = "resource/models/field/"
@@ -47,7 +48,9 @@ class CompFieldEnv(BaseEnv):
 
     def _get_obs_extra(self, info: Dict):
         return dict(
-            sim_timestamp=(info["elapsed_steps"] * self.control_timestep).item()
+            sim_timestamp=(info["elapsed_steps"] * self.control_timestep).item(),
+            primary_robot=self.agent.agents[0].get_ground_truth_obs(),
+            secondary_robot=self.agent.agents[1].get_ground_truth_obs(),
         )
 
     def _load_agent(self, options: dict):
@@ -73,6 +76,16 @@ class CompFieldEnv(BaseEnv):
         )
 
         self.agent = MultiAgent(agents=[primary_agent, secondary_agent])
+
+    def _step_action(
+        self, action: None | np.ndarray | infantry_robot.Tensor | Dict
+    ) -> None | infantry_robot.Tensor:
+        plate_poses = self.agent.agents[0].get_armor_panel_poses()
+
+        # cube = self.scene.actors["debug_cube"]
+        # cube.set_pose(plate_poses[3])
+
+        return super()._step_action(action)
 
     def _load_lighting(self, options: dict):
         # self.scene.set_ambient_light([0.05, 0.05, 0.05])
@@ -152,6 +165,11 @@ class CompFieldEnv(BaseEnv):
         self.scene.human_render_cameras = self._human_render_cameras
 
     def _load_scene(self, options: dict):
+        # debug_builder = self.scene.create_actor_builder()
+        # debug_builder.add_box_visual(half_size=[0.02, 0.02, 0.02])
+        # debug_builder.set_initial_pose(sapien.Pose())
+        # debug_cube = debug_builder.build_static(name="debug_cube")
+
         field_visual_builder = self.scene.create_actor_builder()
 
         field_visual_builder.add_visual_from_file(filename=full_field_visual_gltf_path)

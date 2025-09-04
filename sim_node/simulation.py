@@ -25,6 +25,7 @@ class Simulation:
     def __init__(self, options: dict, seed=2930):
         self.options = dict(reconfigure=True, user=options)
         self.should_render_gui = self.options["user"]["human_gui"]
+        cpu_sim = self.options["user"]["cpu_sim"]
 
         sim_config = SimConfig()
         sim_config.control_freq = self.options["user"]["control_freq"]
@@ -35,6 +36,8 @@ class Simulation:
             reward_mode="sparse",
             obs_mode="state_dict+rgb+segmentation+position",
             sim_config=sim_config,
+            sim_backend="physx_cpu" if cpu_sim else "auto",
+            render_backend="sapien_cpu" if cpu_sim else "sapien_cuda",
         )
 
         spawn_scenario: str = self.options["user"]["spawn_scenario"]
