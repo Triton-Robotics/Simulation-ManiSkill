@@ -19,9 +19,7 @@ package_dir = get_package_share_directory("sim_node")
 @register_agent()
 class InfantryRobot(BaseAgent):
     uid = "infantry"
-    urdf_path = str(
-        os.path.join(package_dir, "resource/models/infantry/infantry.urdf")
-    )
+    urdf_path = str(os.path.join(package_dir, "resource/models/infantry/infantry.urdf"))
 
     # TODO ideally we define a srdf file instead of disabling all collisions. That way we only disable problematic collisions and
     disable_self_collisions = True
@@ -41,6 +39,7 @@ class InfantryRobot(BaseAgent):
             scene, control_freq, control_mode, agent_idx, initial_pose, build_separate
         )
         self.options = options
+        self.prev_chassis_vel = np.array([0.0, 0.0, 0.0])
 
     default_pos = sapien.Pose(p=[0, 0, 0.25], q=[1, 0, 0, 0])
     default_pos.set_rpy([np.deg2rad(90), 0, np.deg2rad(45)])
@@ -342,4 +341,33 @@ class InfantryRobot(BaseAgent):
             .pose.raw_pose.squeeze(0)
             .tolist(),
             panel_poses=panel_poses,
+            lidar_imu=self.get_imu_data(),
         )
+
+    def get_imu_data(self):
+
+        qvel = self.controllers["pd_standard"].qvel
+        x_vel = qvel[0, 0].item()
+        y_vel = qvel[0, 1].item()
+        omega_vel = qvel[0, 2].item()
+
+        qpos = self.controllers["pd_standard"].qpos
+        omega = qpos[0, 2].item()
+        R = np.array(
+            [
+                [np.cos(omega), np.sin(omega)],
+                [-np.sin(omega), np.cos(omega)],
+            ]
+        )
+        local_vel = R @ np.array([x_vel, y_vel])
+
+        dt = 1 / self._control_freq
+        x_accel = (local_vel[0] - self.prev_chassis_vel[0]) / dt
+        y_accel = (local_vel[1] - self.prev_chassis_vel[1]) / dt
+
+        self.prev_chassis_vel[0] = local_vel[0]
+        self.prev_chassis_vel[1] = local_vel[1]
+
+        # print(f"accel: {x_accel:.3f} {y_accel:.3f} {omega_accel:.3f}")
+
+        return [x_accel, y_accel, omega_vel]

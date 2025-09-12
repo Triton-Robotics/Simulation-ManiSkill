@@ -9,7 +9,7 @@ from mani_skill.sensors.camera import Camera
 from mani_skill.utils import common
 
 from tr_messages.msg import RobotGroundTruth, SimGroundTruth
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Pose, Vector3
 
 
 class robot_state:
@@ -101,6 +101,23 @@ def populate_robot_ground_truth_msg(msg: RobotGroundTruth, obs: dict) -> None:
         p = Pose()
         populate_pose_msg_from_list(p, panel)
         msg.armor_panel_poses.append(p)
+
+    msg.chassis_imu.orientation.w = 1.0
+    msg.chassis_imu.orientation.x = 0.0
+    msg.chassis_imu.orientation.y = 0.0
+    msg.chassis_imu.orientation.z = 0.0
+
+    angular_vel = Vector3()
+    angular_vel.x = 0.0
+    angular_vel.y = 0.0
+    angular_vel.z = obs["lidar_imu"][2]
+    msg.chassis_imu.angular_velocity = angular_vel
+
+    linear_accel = Vector3()
+    linear_accel.x = obs["lidar_imu"][0]
+    linear_accel.y = obs["lidar_imu"][1]
+    linear_accel.z = 0.0
+    msg.chassis_imu.linear_acceleration = linear_accel
 
 
 def populate_pose_msg_from_list(msg: Pose, pose_list: list) -> None:
