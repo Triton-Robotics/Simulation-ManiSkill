@@ -47,6 +47,9 @@ class Sim_Node(Node):
         self.declare_parameter("sim_time_scale", 1.0)
         self.declare_parameter("cpu_sim", False)
 
+        self.declare_parameter("primary_color", "red")
+        self.declare_parameter("secondary_color", "red")
+
         self.primary_robot_teleop_sub = self.create_subscription(
             SimTeleopInput,
             "simulation/primary_robot_teleop",
