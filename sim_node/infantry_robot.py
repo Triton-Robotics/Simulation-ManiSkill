@@ -80,6 +80,14 @@ class InfantryRobot(BaseAgent):
         visual_block = lightbar_link.render_shapes[0]
         for shape in visual_block:
             for part in shape.parts:
+                if "color" in self.options:
+                    if self.options["color"] == "blue":
+                        part.material.set_base_color([0, 0, 1, 1])
+                        part.material.set_emission([0, 0, 100, 100])
+                    elif self.options["color"] == "red":
+                        part.material.set_base_color([1, 0, 0, 1])
+                        part.material.set_emission([100, 0, 0, 100])
+                # Testing commit
                 part.material.set_base_color([0, 0, 1, 1])
                 part.material.set_emission([0, 0, 100, 100])
                 part.material.set_emission_texture(None)
