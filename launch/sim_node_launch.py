@@ -30,7 +30,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             "cpu_sim",
-            default_value="false",
+            default_value="true",
         ),
         # ---
         # CV Camera parameters
@@ -78,6 +78,14 @@ def generate_launch_description():
             "use_sim_time",
             default_value="false",
         ),
+        DeclareLaunchArgument(
+            "primary_color",
+            default_value="blue",
+        ),
+        DeclareLaunchArgument(
+            "secondary_color",
+            default_value="blue",
+        )
     ]
 
     node = Node(
@@ -103,6 +111,8 @@ def generate_launch_description():
                     "lidar_pointcloud_resolution"
                 ),
                 "use_sim_time": LaunchConfiguration("use_sim_time"),
+                "primary_color": LaunchConfiguration("primary_color"),
+                "secondary_color": LaunchConfiguration("secondary_color"),
             }
         ],
         output="screen",

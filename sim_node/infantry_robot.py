@@ -37,10 +37,10 @@ class InfantryRobot(BaseAgent):
         build_separate: bool = False,
         options: dict = [],
     ):
+        self.options = options
         super().__init__(
             scene, control_freq, control_mode, agent_idx, initial_pose, build_separate
         )
-        self.options = options
 
     default_pos = sapien.Pose(p=[0, 0, 0.25], q=[1, 0, 0, 0])
     default_pos.set_rpy([np.deg2rad(90), 0, np.deg2rad(45)])
@@ -87,9 +87,6 @@ class InfantryRobot(BaseAgent):
                     elif self.options["color"] == "red":
                         part.material.set_base_color([1, 0, 0, 1])
                         part.material.set_emission([100, 0, 0, 100])
-                # Testing commit
-                part.material.set_base_color([0, 0, 1, 1])
-                part.material.set_emission([0, 0, 100, 100])
                 part.material.set_emission_texture(None)
                 part.material.set_metallic_texture(None)
                 part.material.set_roughness_texture(None)

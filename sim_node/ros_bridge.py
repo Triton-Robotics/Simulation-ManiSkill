@@ -47,8 +47,8 @@ class Sim_Node(Node):
         self.declare_parameter("sim_time_scale", 1.0)
         self.declare_parameter("cpu_sim", False)
 
-        self.declare_parameter("primary_color", "red")
-        self.declare_parameter("secondary_color", "red")
+        self.declare_parameter("primary_color", "blue")
+        self.declare_parameter("secondary_color", "blue")
 
         self.primary_robot_teleop_sub = self.create_subscription(
             SimTeleopInput,
@@ -137,9 +137,10 @@ class Sim_Node(Node):
                 )
                 .get_parameter_value()
                 .integer_value,
+                color=self.get_parameter("primary_color").get_parameter_value().string_value,
             ),
             # second robot is just used as target practice so we dont care about its sensors
-            secondary_robot=dict(enable_cv_cam=False, enable_lidar=False),
+            secondary_robot=dict(enable_cv_cam=False, enable_lidar=False, color=self.get_parameter("secondary_color").get_parameter_value().string_value),
         )
 
         self.simulation = simulation.Simulation(options=options)
