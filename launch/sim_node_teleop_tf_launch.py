@@ -78,6 +78,10 @@ def generate_launch_description():
             "use_sim_time",
             default_value="false",
         ),
+        DeclareLaunchArgument(
+            "enable_tf_helper",
+            default_value="true",
+        )
     ]
 
     node = Node(
@@ -108,4 +112,18 @@ def generate_launch_description():
         output="screen",
     )
 
-    return LaunchDescription(sim_params + [node])
+    tf_helper_node = Node(
+        package="sim_node",
+        executable="tf_tree_helper",
+        parameters= [
+            {
+                "enable_tf_helper": LaunchConfiguration("enable_tf_helper"),
+                "enable_cv_cam": LaunchConfiguration("enable_cv_cam"),
+                "use_sim_time": LaunchConfiguration("use_sim_time"),
+            }
+        ]
+    )
+
+    keyboard_controls_node = Node(package="sim_node", executable="keyboard_controls")
+
+    return LaunchDescription(sim_params + [node, tf_helper_node, keyboard_controls_node])

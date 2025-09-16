@@ -7,6 +7,7 @@ from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
+    # TODO: Remove this file (redundant to teleop launch)
     ld = LaunchDescription()
 
     sim_launch_path = (

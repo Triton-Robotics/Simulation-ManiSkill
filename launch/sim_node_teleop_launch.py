@@ -108,4 +108,6 @@ def generate_launch_description():
         output="screen",
     )
 
-    return LaunchDescription(sim_params + [node])
+    keyboard_controls_node = Node(package="sim_node", executable="keyboard_controls")
+
+    return LaunchDescription(sim_params + [node, keyboard_controls_node])
