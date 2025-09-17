@@ -81,12 +81,9 @@ class InfantryRobot(BaseAgent):
         for shape in visual_block:
             for part in shape.parts:
                 if "color" in self.options:
-                    if self.options["color"] == "blue":
-                        part.material.set_base_color([0, 0, 1, 1])
-                        part.material.set_emission([0, 0, 100, 100])
-                    elif self.options["color"] == "red":
-                        part.material.set_base_color([1, 0, 0, 1])
-                        part.material.set_emission([100, 0, 0, 100])
+                    color = self.options["color"]
+                    part.material.set_base_color(color) # Set rgba list of float
+                    part.material.set_emission([x * 100 for x in color]) # Multiply by scalar
                 part.material.set_emission_texture(None)
                 part.material.set_metallic_texture(None)
                 part.material.set_roughness_texture(None)

@@ -30,7 +30,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             "cpu_sim",
-            default_value="true",
+            default_value="false",
         ),
         # ---
         # CV Camera parameters
@@ -79,12 +79,12 @@ def generate_launch_description():
             default_value="false",
         ),
         DeclareLaunchArgument(
-            "primary_color",
-            default_value="blue",
+            "primary_robot_color",
+            default_value="[0.0, 0.0, 1.0, 1.0]",
         ),
         DeclareLaunchArgument(
-            "secondary_color",
-            default_value="blue",
+            "secondary_robot_color",
+            default_value="[0.0, 0.0, 1.0, 1.0]",
         )
     ]
 
@@ -111,8 +111,8 @@ def generate_launch_description():
                     "lidar_pointcloud_resolution"
                 ),
                 "use_sim_time": LaunchConfiguration("use_sim_time"),
-                "primary_color": LaunchConfiguration("primary_color"),
-                "secondary_color": LaunchConfiguration("secondary_color"),
+                "primary_robot_color": LaunchConfiguration("primary_robot_color"),
+                "secondary_robot_color": LaunchConfiguration("secondary_robot_color"),
             }
         ],
         output="screen",
