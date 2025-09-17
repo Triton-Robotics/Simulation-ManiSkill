@@ -30,7 +30,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             "cpu_sim",
-            default_value="true",
+            default_value="false",
         ),
         # ---
         # CV Camera parameters

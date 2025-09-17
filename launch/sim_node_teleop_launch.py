@@ -1,113 +1,25 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
+from launch.actions import IncludeLaunchDescription
 from launch_ros.actions import Node
-from launch.substitutions import LaunchConfiguration
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 
+from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
-    # Simulation parameters
-    sim_params = [
-        # General parameters
-        DeclareLaunchArgument(
-            "human_gui",
-            default_value="true",
-        ),
-        DeclareLaunchArgument(
-            "spawn_scenario",
-            default_value="center_1v1",
-        ),
-        DeclareLaunchArgument(
-            "sim_time_scale",
-            default_value="1.0",
-        ),
-        DeclareLaunchArgument(
-            "control_freq",
-            default_value="150",
-        ),
-        DeclareLaunchArgument(
-            "sim_freq",
-            default_value="300",
-        ),
-        DeclareLaunchArgument(
-            "cpu_sim",
-            default_value="true",
-        ),
-        # ---
-        # CV Camera parameters
-        DeclareLaunchArgument(
-            "enable_cv_cam",
-            default_value="true",
-        ),
-        DeclareLaunchArgument(
-            "cv_exposure",
-            default_value="0.005",
-        ),
-        DeclareLaunchArgument(
-            "cv_fov_horizontal",
-            default_value="31",
-        ),
-        DeclareLaunchArgument(
-            "cv_fov_vertical",
-            default_value="20",
-        ),
-        DeclareLaunchArgument(
-            "cv_ray_tracing",
-            default_value="false",
-        ),
-        DeclareLaunchArgument(
-            "cv_resolution_x",
-            default_value="1920",
-        ),
-        DeclareLaunchArgument(
-            "cv_resolution_y",
-            default_value="1200",
-        ),
-        # ---
-        # LiDAR parameters
-        DeclareLaunchArgument(
-            "enable_lidar",
-            default_value="true",
-        ),
-        DeclareLaunchArgument(
-            "lidar_pointcloud_resolution",
-            default_value="20",
-        ),
-        # ---
-        # ROS parameters
-        DeclareLaunchArgument(
-            "use_sim_time",
-            default_value="false",
-        ),
-    ]
+    # TODO: Remove this file (redundant to teleop launch)
+    ld = LaunchDescription()
 
-    node = Node(
-        package="sim_node",
-        executable="sim_node",
-        parameters=[
-            {
-                "human_gui": LaunchConfiguration("human_gui"),
-                "spawn_scenario": LaunchConfiguration("spawn_scenario"),
-                "sim_time_scale": LaunchConfiguration("sim_time_scale"),
-                "control_freq": LaunchConfiguration("control_freq"),
-                "sim_freq": LaunchConfiguration("sim_freq"),
-                "cpu_sim": LaunchConfiguration("cpu_sim"),
-                "enable_cv_cam": LaunchConfiguration("enable_cv_cam"),
-                "cv_exposure": LaunchConfiguration("cv_exposure"),
-                "cv_fov_horizontal": LaunchConfiguration("cv_fov_horizontal"),
-                "cv_fov_vertical": LaunchConfiguration("cv_fov_vertical"),
-                "cv_ray_tracing": LaunchConfiguration("cv_ray_tracing"),
-                "cv_resolution_x": LaunchConfiguration("cv_resolution_x"),
-                "cv_resolution_y": LaunchConfiguration("cv_resolution_y"),
-                "enable_lidar": LaunchConfiguration("enable_lidar"),
-                "lidar_pointcloud_resolution": LaunchConfiguration(
-                    "lidar_pointcloud_resolution"
-                ),
-                "use_sim_time": LaunchConfiguration("use_sim_time"),
-            }
-        ],
-        output="screen",
+    sim_launch_path = (
+        get_package_share_directory("sim_node") + "/launch/sim_node_launch.py"
+    )
+
+    sim_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(launch_file_path=sim_launch_path)
     )
 
     keyboard_controls_node = Node(package="sim_node", executable="keyboard_controls")
 
-    return LaunchDescription(sim_params + [node, keyboard_controls_node])
+    ld.add_action(sim_launch)
+    ld.add_action(keyboard_controls_node)
+
+    return ld
