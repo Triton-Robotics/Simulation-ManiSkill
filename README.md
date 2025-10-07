@@ -12,7 +12,8 @@ This is a physically grounded, photo-realistic simulator built to seamlessly int
 
 ![lidar pointcloud](.md/lidar_pointcloud.png)
 
-### [__Practical usage to measure SolvePnP error__](https://github.com/Triton-Robotics-Training/tr-autonomy-training-visualization)
+### [__Example of practical usage in determing SolvePnP error__](https://github.com/Triton-Robotics-Training/tr-autonomy-training-visualization)
+[481282250-1d7bc3bb-b839-484e-9fd0-1a842f532db3.webm](https://github.com/user-attachments/assets/a6644f19-5bed-4ee4-ba6e-e46c516a1733)
 
 ## Building
 
