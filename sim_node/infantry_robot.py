@@ -37,10 +37,10 @@ class InfantryRobot(BaseAgent):
         build_separate: bool = False,
         options: dict = [],
     ):
+        self.options = options
         super().__init__(
             scene, control_freq, control_mode, agent_idx, initial_pose, build_separate
         )
-        self.options = options
 
     default_pos = sapien.Pose(p=[0, 0, 0.25], q=[1, 0, 0, 0])
     default_pos.set_rpy([np.deg2rad(90), 0, np.deg2rad(45)])
@@ -80,8 +80,10 @@ class InfantryRobot(BaseAgent):
         visual_block = lightbar_link.render_shapes[0]
         for shape in visual_block:
             for part in shape.parts:
-                part.material.set_base_color([0, 0, 1, 1])
-                part.material.set_emission([0, 0, 100, 100])
+                if "color" in self.options:
+                    color = self.options["color"]
+                    part.material.set_base_color(color) # Set rgba list of float
+                    part.material.set_emission([x * 100 for x in color]) # Multiply by scalar
                 part.material.set_emission_texture(None)
                 part.material.set_metallic_texture(None)
                 part.material.set_roughness_texture(None)
