@@ -10,7 +10,7 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     sim_launch_path = (
-        get_package_share_directory("sim_node") + "/launch/sim_node_teleop_launch.py"
+        get_package_share_directory("sim_node") + "/launch/sim_node_launch.py"
     )
 
     sim_launch = IncludeLaunchDescription(
@@ -18,8 +18,10 @@ def generate_launch_description():
     )
 
     tf_helper_node = Node(package="sim_node", executable="tf_tree_helper")
+    keyboard_controls_node = Node(package="sim_node", executable="keyboard_controls")
 
     ld.add_action(sim_launch)
+    ld.add_action(keyboard_controls_node)
     ld.add_action(tf_helper_node)
 
     return ld

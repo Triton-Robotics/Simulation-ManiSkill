@@ -50,7 +50,7 @@ setup(
         "console_scripts": [
             "sim_node = sim_node.ros_bridge:main",
             "keyboard_controls = keyboard_controls.keyboard_controls:main",
-            "tf_tree_helper = sim_node.tf_tree_helper:main",
+            "tf_tree_helper = visualization.tf_tree_helper:main",
         ],
     },
 )

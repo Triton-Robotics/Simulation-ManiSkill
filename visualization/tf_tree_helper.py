@@ -2,7 +2,6 @@ from geometry_msgs.msg import TransformStamped, Transform
 
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import SensorDataQoS
 
 from std_msgs.msg import Header
 
@@ -20,39 +19,34 @@ class FramePublisher(Node):
         # Initialize tf2 broadcaster
         self.tf_broadcaster = TransformBroadcaster(self)
 
-        modified_sensor_data_QOS = SensorDataQoS()
-        modified_sensor_data_QOS.depth = 10
-
         # Create subscriptions
         self.subscription_true_pose = self.create_subscription(
             SimGroundTruth,
             f'/simulation/ground_truth',
-            self.true_pose_handler,
-            modified_sensor_data_QOS)
+            self.true_pose_handler, 
+            10)
 
     def true_pose_handler(self, msg):
 
-        if msg.primary_robot.camera_pose:
-            self.create_pose_message('map', 'primary_camera_frame',msg.primary_robot.camera_pose, msg.header)
-            self.create_pose_message('map', 'primary_lidar_frame',msg.primary_robot.lidar_pose, msg.header)
-            self.create_pose_message('map', 'primary_turret_frame',msg.primary_robot.turret_pose, msg.header)
-            self.create_pose_message('map', 'primary_chassis_frame',msg.primary_robot.chassis_pose, msg.header)
+        self.create_pose_message('map', 'primary_camera_frame',msg.primary_robot.camera_pose, msg.header)
+        self.create_pose_message('map', 'primary_lidar_frame',msg.primary_robot.lidar_pose, msg.header)
+        self.create_pose_message('map', 'primary_turret_frame',msg.primary_robot.turret_pose, msg.header)
+        self.create_pose_message('map', 'primary_chassis_frame',msg.primary_robot.chassis_pose, msg.header)
 
-            self.create_pose_message('map', 'primary_panel_0', msg.primary_robot.armor_panel_poses[0], msg.header)
-            self.create_pose_message('map', 'primary_panel_1', msg.primary_robot.armor_panel_poses[1], msg.header)
-            self.create_pose_message('map', 'primary_panel_2', msg.primary_robot.armor_panel_poses[2], msg.header)
-            self.create_pose_message('map', 'primary_panel_3', msg.primary_robot.armor_panel_poses[3], msg.header)
+        self.create_pose_message('map', 'primary_panel_0', msg.primary_robot.armor_panel_poses[0], msg.header)
+        self.create_pose_message('map', 'primary_panel_1', msg.primary_robot.armor_panel_poses[1], msg.header)
+        self.create_pose_message('map', 'primary_panel_2', msg.primary_robot.armor_panel_poses[2], msg.header)
+        self.create_pose_message('map', 'primary_panel_3', msg.primary_robot.armor_panel_poses[3], msg.header)
 
-        if msg.secondary_robot.camera_pose:
-            self.create_pose_message('map', 'secondary_camera_frame',msg.secondary_robot.camera_pose, msg.header)
-            self.create_pose_message('map', 'secondary_lidar_frame',msg.secondary_robot.lidar_pose, msg.header)
-            self.create_pose_message('map', 'secondary_turret_frame',msg.secondary_robot.turret_pose, msg.header)
-            self.create_pose_message('map', 'secondary_chassis_frame',msg.secondary_robot.chassis_pose, msg.header)
+        self.create_pose_message('map', 'secondary_camera_frame',msg.secondary_robot.camera_pose, msg.header)
+        self.create_pose_message('map', 'secondary_lidar_frame',msg.secondary_robot.lidar_pose, msg.header)
+        self.create_pose_message('map', 'secondary_turret_frame',msg.secondary_robot.turret_pose, msg.header)
+        self.create_pose_message('map', 'secondary_chassis_frame',msg.secondary_robot.chassis_pose, msg.header)
 
-            self.create_pose_message('map', 'secondary_panel_0', msg.secondary_robot.armor_panel_poses[0], msg.header)
-            self.create_pose_message('map', 'secondary_panel_1', msg.secondary_robot.armor_panel_poses[1], msg.header)
-            self.create_pose_message('map', 'secondary_panel_2', msg.secondary_robot.armor_panel_poses[2], msg.header)
-            self.create_pose_message('map', 'secondary_panel_3', msg.secondary_robot.armor_panel_poses[3], msg.header)
+        self.create_pose_message('map', 'secondary_panel_0', msg.secondary_robot.armor_panel_poses[0], msg.header)
+        self.create_pose_message('map', 'secondary_panel_1', msg.secondary_robot.armor_panel_poses[1], msg.header)
+        self.create_pose_message('map', 'secondary_panel_2', msg.secondary_robot.armor_panel_poses[2], msg.header)
+        self.create_pose_message('map', 'secondary_panel_3', msg.secondary_robot.armor_panel_poses[3], msg.header)
 
     # Utility function to create message so I don't have to do it manually
     def create_pose_message(self, parent_str: str, child_str: str, pose: Pose, header: Header):
