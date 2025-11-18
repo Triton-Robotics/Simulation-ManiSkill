@@ -215,7 +215,7 @@ Stephen Brawner (brawner@gmail.com)
         <parent link="turret_link" />
         <child link="lidar_link" />
         <!-- TODO make this more exact -->
-        <origin xyz="0 0.15 0.18" rpy="0 0 -1.57" />
+        <origin xyz="0 0.15 0.18" rpy="-1.57 -1.57 0" />
     </joint>
 
     <link

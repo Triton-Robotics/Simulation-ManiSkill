@@ -19,9 +19,7 @@ package_dir = get_package_share_directory("sim_node")
 @register_agent()
 class InfantryRobot(BaseAgent):
     uid = "infantry"
-    urdf_path = str(
-        os.path.join(package_dir, "resource/models/infantry/infantry.urdf")
-    )
+    urdf_path = str(os.path.join(package_dir, "resource/models/infantry/infantry.urdf"))
 
     # TODO ideally we define a srdf file instead of disabling all collisions. That way we only disable problematic collisions and
     disable_self_collisions = True
@@ -202,28 +200,26 @@ class InfantryRobot(BaseAgent):
         if self.options.get("enable_lidar", False):
             # lidar simulated with multiple camera sensors
             pose0 = sapien.Pose()
-            # left cam
-            pose0.set_rpy([0, np.deg2rad(-45), np.deg2rad(0)])
+            pose0.set_rpy([0, np.deg2rad(0), np.deg2rad(45)])
 
-            # bottom cam
             pose1 = sapien.Pose()
-            pose1.set_rpy([0, np.deg2rad(-45), np.deg2rad(90)])
-
-            # right cam
-            pose2 = sapien.Pose()
-            pose2.set_rpy([0, np.deg2rad(-45), np.deg2rad(180)])
-
-            # top cam
-            pose3 = sapien.Pose()
-            pose3.set_rpy([0, np.deg2rad(-45), np.deg2rad(270)])
+            pose1.set_rpy([0, np.deg2rad(0), np.deg2rad(-45)])
 
             lidar_width_resolution = self.options["lidar_pointcloud_resolution"]
             lidar_height_resolution = self.options["lidar_pointcloud_resolution"]
 
             lidar_camera_intrinsics = np.array(
                 [
-                    [0.5 * lidar_width_resolution, 0.0, 0.5 * lidar_width_resolution],
-                    [0.0, 0.5 * lidar_height_resolution, 0.5 * lidar_height_resolution],
+                    [
+                        lidar_width_resolution / (2 * np.tan(np.deg2rad(90) / 2)),
+                        0.0,
+                        0.5 * lidar_width_resolution,
+                    ],
+                    [
+                        0.0,
+                        lidar_height_resolution / (2 * np.tan(np.deg2rad(90) / 2)),
+                        0.5 * lidar_height_resolution,
+                    ],
                     [0.0, 0.0, 1.0],
                 ]
             )
@@ -272,32 +268,6 @@ class InfantryRobot(BaseAgent):
                     shader_config=lidar_shader_config,
                 )
             )
-            sensors.append(
-                CameraConfig(
-                    uid="lidar_2_" + str(self._agent_idx),
-                    pose=pose2,
-                    width=lidar_width_resolution,
-                    height=lidar_height_resolution,
-                    intrinsic=lidar_camera_intrinsics,
-                    near=0.01,
-                    far=100,
-                    entity_uid="lidar_link",
-                    shader_config=lidar_shader_config,
-                )
-            )
-            sensors.append(
-                CameraConfig(
-                    uid="lidar_3_" + str(self._agent_idx),
-                    pose=pose3,
-                    width=lidar_width_resolution,
-                    height=lidar_height_resolution,
-                    intrinsic=lidar_camera_intrinsics,
-                    near=0.01,
-                    far=100,
-                    entity_uid="lidar_link",
-                    shader_config=lidar_shader_config,
-                )
-            )
 
         return sensors
 
@@ -313,10 +283,10 @@ class InfantryRobot(BaseAgent):
             sapien.Pose(p=[0, height, -radius]),
         ]
 
-        sapien_poses[0].set_rpy([0, np.deg2rad(90), 0])
-        sapien_poses[1].set_rpy([0, np.deg2rad(180), 0])
-        sapien_poses[2].set_rpy([0, np.deg2rad(-90), 0])
-        sapien_poses[3].set_rpy([0, np.deg2rad(90), 0])
+        sapien_poses[0].set_rpy([np.deg2rad(-90), np.deg2rad(0), 0])
+        sapien_poses[1].set_rpy([np.deg2rad(-90), np.deg2rad(180), 0])
+        sapien_poses[2].set_rpy([np.deg2rad(-90), np.deg2rad(-90), 0])
+        sapien_poses[3].set_rpy([np.deg2rad(-90), np.deg2rad(90), 0])
 
         delta_poses = [Pose.create(sp) for sp in sapien_poses]
         # TODO using debug cube these armor panel poses look slightly off
@@ -327,11 +297,18 @@ class InfantryRobot(BaseAgent):
             pose.raw_pose.squeeze(0).tolist() for pose in self.get_armor_panel_poses()
         ]
 
+        rot = sapien.Pose()
+        rot.set_rpy([np.deg2rad(-90), np.deg2rad(-90), 0])
+
+        chassis_pose: Pose = self.robot.links_map["base_link"].pose * rot
+        chassis_pose = chassis_pose.raw_pose.squeeze(0).tolist()
+
         # squeeze(0) because poses are batched but we only have 1 environment
         return dict(
-            chassis_pose=self.robot.links_map["base_link"]
-            .pose.raw_pose.squeeze(0)
-            .tolist(),
+            # chassis_pose=self.robot.links_map["base_link"]
+            # .pose.raw_pose.squeeze(0)
+            # .tolist(),
+            chassis_pose=chassis_pose,
             turret_pose=self.robot.links_map["turret_link"]
             .pose.raw_pose.squeeze(0)
             .tolist(),
