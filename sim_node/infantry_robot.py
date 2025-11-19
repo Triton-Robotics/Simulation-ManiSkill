@@ -300,23 +300,23 @@ class InfantryRobot(BaseAgent):
         rot = sapien.Pose()
         rot.set_rpy([np.deg2rad(-90), np.deg2rad(-90), 0])
 
+        # squeeze(0) because poses are batched but we only have 1 environment
         chassis_pose: Pose = self.robot.links_map["base_link"].pose * rot
         chassis_pose = chassis_pose.raw_pose.squeeze(0).tolist()
 
-        # squeeze(0) because poses are batched but we only have 1 environment
+        turret_pose = self.robot.links_map["turret_link"].pose * rot
+        turret_pose = turret_pose.raw_pose.squeeze(0).tolist()
+
+        camera_pose = (
+            self.robot.links_map["camera_link"].pose.raw_pose.squeeze(0).tolist()
+        )
+        lidar_pose = (
+            self.robot.links_map["lidar_link"].pose.raw_pose.squeeze(0).tolist()
+        )
         return dict(
-            # chassis_pose=self.robot.links_map["base_link"]
-            # .pose.raw_pose.squeeze(0)
-            # .tolist(),
             chassis_pose=chassis_pose,
-            turret_pose=self.robot.links_map["turret_link"]
-            .pose.raw_pose.squeeze(0)
-            .tolist(),
-            camera_pose=self.robot.links_map["camera_link"]
-            .pose.raw_pose.squeeze(0)
-            .tolist(),
-            lidar_pose=self.robot.links_map["lidar_link"]
-            .pose.raw_pose.squeeze(0)
-            .tolist(),
+            turret_pose=turret_pose,
+            camera_pose=camera_pose,
+            lidar_pose=lidar_pose,
             panel_poses=panel_poses,
         )

@@ -47,7 +47,6 @@ def sensor_data_to_pointcloud(observation: Dict):
     sensor_data = observation["sensor_data"]
     camera_params = observation["sensor_param"]
     pointcloud_obs = dict()
-    # print(sensor_data.items())
 
     for cam_uid, images in sensor_data.items():
         if "lidar" in cam_uid:
