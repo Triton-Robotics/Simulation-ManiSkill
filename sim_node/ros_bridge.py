@@ -172,27 +172,35 @@ class Sim_Node(Node):
         sim_ground_truth_msg.step_sim = (t2 - t1) * 1000
 
         robot_state_position: Tensor = obs["agent"]["infantry-0"]["qpos"]
-        robot_state_position = robot_state_position.squeeze(0)  # remove batch dimension
+        # robot_state_position = robot_state_position.squeeze(0)  # remove batch dimension
 
         # FIX ME THIS IS INCORRECT
         robot_state_velocity: Tensor = obs["agent"]["infantry-0"]["qvel"]
-        robot_state_velocity = robot_state_velocity.squeeze(0)  # remove batch dimension
+        # robot_state_velocity = robot_state_velocity.squeeze(0)  # remove batch dimension
 
         self.last_recorded_robot_state = utils.robot_state(
-            x_vel=robot_state_velocity[0].item(),
-            y_vel=robot_state_velocity[1].item(),
-            angular_vel=robot_state_velocity[2].item(),
-            yaw=robot_state_position[3].item(),
-            pitch=robot_state_position[4].item(),
+            x_vel=robot_state_velocity[0][0].item(),
+            y_vel=robot_state_velocity[0][1].item(),
+            angular_vel=robot_state_velocity[0][2].item(),
+            yaw=robot_state_position[0][3].item(),
+            pitch=robot_state_position[0][4].item(),
         )
 
         if self.get_parameter("enable_cv_cam").get_parameter_value().bool_value:
             t1 = time.perf_counter()
             rgb_tensor = obs["sensor_data"]["cv_camera_0"]["rgb"]
             rgb_tensor: torch.Tensor
-            rgb_tensor = rgb_tensor.squeeze(0)  # remove batch dimension
+            # rgb_tensor = rgb_tensor.squeeze(0)  # remove batch dimension
+            rgb_array = rgb_tensor[0].numpy(force=True)
 
-            rgb_array = rgb_tensor.numpy(force=True)
+            # rgb_array = rgb_tensor.numpy(force=True)
+
+            if rgb_array.shape[0] == 3:  # If first dimension is 3, it's (C, H, W)
+                rgb_array = rgb_array.transpose(1, 2, 0)  # Convert to (H, W, C)
+
+            # Ensure uint8 type for cv_bridge
+            rgb_array = rgb_array.astype("uint8")
+
             img_msg = self.cv_bridge.cv2_to_imgmsg(rgb_array, encoding="rgb8")
             img_msg.header.stamp = self.clock_msg.clock
             t2 = time.perf_counter()
@@ -208,7 +216,8 @@ class Sim_Node(Node):
             pointcloud = utils.sensor_data_to_pointcloud(obs)
 
             xyzw = pointcloud["xyzw"]
-            xyzw = xyzw.squeeze(0)
+            # xyzw = xyzw.squeeze(0)
+            xyzw = xyzw[0]
             valid_mask = xyzw[:, 3] == 1
             points = xyzw[valid_mask, :3]
             msg = self.points_to_ros_pointcloud2(points)

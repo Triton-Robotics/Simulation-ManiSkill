@@ -79,7 +79,8 @@ class InfantryRobot(BaseAgent):
         for shape in visual_block:
             for part in shape.parts:
                 part.material.set_base_color([0, 0, 1, 1])
-                part.material.set_emission([0, 0, 100, 100])
+                # TODO tune these parameters
+                part.material.set_emission([0, 0, 100, 50])
                 part.material.set_emission_texture(None)
                 part.material.set_metallic_texture(None)
                 part.material.set_roughness_texture(None)

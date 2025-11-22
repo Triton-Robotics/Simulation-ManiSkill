@@ -38,6 +38,8 @@ class Simulation:
             sim_config=sim_config,
             sim_backend="physx_cpu" if cpu_sim else "auto",
             render_backend="sapien_cpu" if cpu_sim else "sapien_cuda",
+            num_envs=2,
+            # parallel_in_single_scene=True,
         )
 
         spawn_scenario: str = self.options["user"]["spawn_scenario"]
@@ -99,7 +101,6 @@ class Simulation:
         }
 
         obs, reward, terminated, truncated, info = self.env.step(action=action)
-        done = terminated or truncated
         if self.should_render_gui:
             self.env.render()
 
