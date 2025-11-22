@@ -105,15 +105,15 @@ class CompFieldEnv(BaseEnv):
 
         self.agent = MultiAgent(agents=[primary_agent, secondary_agent])
 
-    def _step_action(
-        self, action: None | np.ndarray | infantry_robot.Tensor | Dict
-    ) -> None | infantry_robot.Tensor:
-        plate_poses = self.agent.agents[0].get_armor_panel_poses()
+    # def _step_action(
+    #     self, action: None | np.ndarray | infantry_robot.Tensor | Dict
+    # ) -> None | infantry_robot.Tensor:
+    #     plate_poses = self.agent.agents[0].get_armor_panel_poses()
 
-        # cube = self.scene.actors["debug_cube"]
-        # cube.set_pose(plate_poses[3])
+    #     # cube = self.scene.actors["debug_cube"]
+    #     # cube.set_pose(plate_poses[3])
 
-        return super()._step_action(action)
+    #     return super()._step_action(None)
 
     def _load_lighting(self, options: dict):
         # self.scene.set_ambient_light([0.05, 0.05, 0.05])

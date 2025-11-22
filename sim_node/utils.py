@@ -90,24 +90,29 @@ def sensor_data_to_pointcloud(observation: Dict):
 # obs should be the dict of the specific robot from extra obs that this msg belongs to
 # ex: obs = obs["extra"]["primary_robot"]
 def populate_robot_ground_truth_msg(msg: RobotGroundTruth, obs: dict) -> None:
-    populate_pose_msg_from_list(msg.chassis_pose, obs["chassis_pose"])
-    populate_pose_msg_from_list(msg.turret_pose, obs["turret_pose"])
-    populate_pose_msg_from_list(msg.camera_pose, obs["camera_pose"])
-    populate_pose_msg_from_list(msg.lidar_pose, obs["lidar_pose"])
+    populate_pose_msg_from_batched_pose_tensor(msg.chassis_pose, obs["chassis_pose"])
+    populate_pose_msg_from_batched_pose_tensor(msg.turret_pose, obs["turret_pose"])
+    populate_pose_msg_from_batched_pose_tensor(msg.camera_pose, obs["camera_pose"])
+    populate_pose_msg_from_batched_pose_tensor(msg.lidar_pose, obs["lidar_pose"])
 
     msg.armor_panel_poses = []
-    for panel in obs["panel_poses"]:
+    # for panel in obs["panel_poses"]:
+    for i in range(3):
         p = Pose()
-        populate_pose_msg_from_list(p, panel)
+        # send batched i-th panel
+        populate_pose_msg_from_batched_pose_tensor(p, obs["panel_poses"][:, i])
         msg.armor_panel_poses.append(p)
 
 
-def populate_pose_msg_from_list(msg: Pose, pose_list: list) -> None:
-    msg.position.x = pose_list[0]
-    msg.position.y = pose_list[1]
-    msg.position.z = pose_list[2]
+def populate_pose_msg_from_batched_pose_tensor(
+    msg: Pose, poses_tensor: torch.Tensor
+) -> None:
+    # for now we just get data from the 1st env for ros
+    msg.position.x = poses_tensor[0][0].item()
+    msg.position.y = poses_tensor[0][1].item()
+    msg.position.z = poses_tensor[0][2].item()
 
-    msg.orientation.w = pose_list[3]
-    msg.orientation.x = pose_list[4]
-    msg.orientation.y = pose_list[5]
-    msg.orientation.z = pose_list[6]
+    msg.orientation.w = poses_tensor[0][3].item()
+    msg.orientation.x = poses_tensor[0][4].item()
+    msg.orientation.y = poses_tensor[0][5].item()
+    msg.orientation.z = poses_tensor[0][6].item()

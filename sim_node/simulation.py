@@ -7,6 +7,7 @@ from sim_node import comp_field
 import numpy as np
 from sim_node import utils
 from mani_skill.utils.structs import SimConfig
+import torch
 
 SPAWN_SCENARIO_KEYFRAME_MAPPING: dict = dict(
     center_1v1=dict(
@@ -79,25 +80,37 @@ class Simulation:
             primary_world_relative_vel = np.array([0, 0])
             secondary_world_relative_vel = np.array([0, 0])
 
+        primary_robot_action = torch.tensor(
+            [
+                primary_world_relative_vel[0],
+                primary_world_relative_vel[1],
+                primary_robot_state.angular_vel,
+                primary_robot_state.yaw,
+                primary_robot_state.pitch,
+            ],
+            dtype=torch.float32,
+        )
+        secondary_robot_action = torch.tensor(
+            [
+                secondary_world_relative_vel[0],
+                secondary_world_relative_vel[1],
+                secondary_robot_state.angular_vel,
+                secondary_robot_state.yaw,
+                secondary_robot_state.pitch,
+            ],
+            dtype=torch.float32,
+        )
+
+        primary_robot_action_batched = primary_robot_action.unsqueeze(0).expand(
+            self.env.num_envs, -1
+        )
+        secondary_robot_action_batched = secondary_robot_action.unsqueeze(0).expand(
+            self.env.num_envs, -1
+        )
+
         action = {
-            "infantry-0": np.array(
-                [
-                    primary_world_relative_vel[0],
-                    primary_world_relative_vel[1],
-                    primary_robot_state.angular_vel,
-                    primary_robot_state.yaw,
-                    primary_robot_state.pitch,
-                ]
-            ),
-            "infantry-1": np.array(
-                [
-                    secondary_world_relative_vel[0],
-                    secondary_world_relative_vel[1],
-                    secondary_robot_state.angular_vel,
-                    secondary_robot_state.yaw,
-                    secondary_robot_state.pitch,
-                ]
-            ),
+            "infantry-0": primary_robot_action_batched.cpu().numpy(),
+            "infantry-1": secondary_robot_action_batched.cpu().numpy(),
         }
 
         obs, reward, terminated, truncated, info = self.env.step(action=action)

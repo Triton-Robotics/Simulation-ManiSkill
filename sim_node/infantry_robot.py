@@ -272,7 +272,7 @@ class InfantryRobot(BaseAgent):
 
         return sensors
 
-    def get_armor_panel_poses(self) -> list[Pose]:
+    def get_armor_panel_poses(self) -> torch.Tensor:
         plates_link = self.robot.links_map["base_link"]
         radius = 0.23
         height = -0.08
@@ -290,34 +290,31 @@ class InfantryRobot(BaseAgent):
         sapien_poses[3].set_rpy([np.deg2rad(-90), np.deg2rad(90), 0])
 
         delta_poses = [Pose.create(sp) for sp in sapien_poses]
+
+        # List of 4 (b, 7) tensors
+        poses_per_panel = [(plates_link.pose * dp).raw_pose for dp in delta_poses]
+        # Stack across panels: (4, b, 7)
+        panels_stacked = torch.stack(poses_per_panel)
+        # Permute to batched (batch, panel, 7): (b, 4, 7)
+        batched_poses = panels_stacked.permute(1, 0, 2)
+
         # TODO using debug cube these armor panel poses look slightly off
-        return [plates_link.pose * dp for dp in delta_poses]
+        return batched_poses
 
     def get_ground_truth_obs(self) -> dict:
-        panel_poses = [
-            pose.raw_pose.squeeze(0).tolist() for pose in self.get_armor_panel_poses()
-        ]
 
         rot = sapien.Pose()
         rot.set_rpy([np.deg2rad(-90), np.deg2rad(-90), 0])
 
         # squeeze(0) because poses are batched but we only have 1 environment
         chassis_pose: Pose = self.robot.links_map["base_link"].pose * rot
-        chassis_pose = chassis_pose.raw_pose.squeeze(0).tolist()
-
         turret_pose = self.robot.links_map["turret_link"].pose * rot
-        turret_pose = turret_pose.raw_pose.squeeze(0).tolist()
-
-        camera_pose = (
-            self.robot.links_map["camera_link"].pose.raw_pose.squeeze(0).tolist()
-        )
-        lidar_pose = (
-            self.robot.links_map["lidar_link"].pose.raw_pose.squeeze(0).tolist()
-        )
+        camera_pose = self.robot.links_map["camera_link"].pose
+        lidar_pose = self.robot.links_map["lidar_link"].pose
         return dict(
-            chassis_pose=chassis_pose,
-            turret_pose=turret_pose,
-            camera_pose=camera_pose,
-            lidar_pose=lidar_pose,
-            panel_poses=panel_poses,
+            chassis_pose=chassis_pose.raw_pose,
+            turret_pose=turret_pose.raw_pose,
+            camera_pose=camera_pose.raw_pose,
+            lidar_pose=lidar_pose.raw_pose,
+            panel_poses=self.get_armor_panel_poses(),
         )
