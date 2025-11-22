@@ -97,7 +97,7 @@ def populate_robot_ground_truth_msg(msg: RobotGroundTruth, obs: dict) -> None:
 
     msg.armor_panel_poses = []
     # for panel in obs["panel_poses"]:
-    for i in range(3):
+    for i in range(4):
         p = Pose()
         # send batched i-th panel
         populate_pose_msg_from_batched_pose_tensor(p, obs["panel_poses"][:, i])
