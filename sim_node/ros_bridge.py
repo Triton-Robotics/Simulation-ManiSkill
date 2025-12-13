@@ -19,6 +19,8 @@ from cv_bridge import CvBridge
 import torch
 from torch import Tensor
 
+from sim_node.simulation import SPAWN_SCENARIO_KEYFRAME_MAPPING
+
 
 class Sim_Node(Node):
     def __init__(self):
@@ -46,6 +48,8 @@ class Sim_Node(Node):
         self.declare_parameter("sim_freq", 300)
         self.declare_parameter("sim_time_scale", 1.0)
         self.declare_parameter("cpu_sim", False)
+        # self.declare_parameter("parallel_in_single_scene", True)
+        # self.declare_parameter("num_envs", 2)
 
         self.primary_robot_teleop_sub = self.create_subscription(
             SimTeleopInput,
@@ -139,7 +143,57 @@ class Sim_Node(Node):
             secondary_robot=dict(enable_cv_cam=False, enable_lidar=False),
         )
 
-        self.simulation = simulation.Simulation(options=options)
+        spawn_scenario = (
+            self.get_parameter("spawn_scenario").get_parameter_value().string_value
+        )
+
+        robot_keyframes = [
+            SPAWN_SCENARIO_KEYFRAME_MAPPING[spawn_scenario]["primary_robot"],
+            SPAWN_SCENARIO_KEYFRAME_MAPPING[spawn_scenario]["secondary_robot"],
+        ]
+
+        kwargs = dict(
+            robot_keyframes=robot_keyframes,
+            human_gui=self.get_parameter("human_gui").get_parameter_value().bool_value,
+            control_freq=self.get_parameter("control_freq")
+            .get_parameter_value()
+            .integer_value,
+            sim_freq=self.get_parameter("sim_freq").get_parameter_value().integer_value,
+            cpu_sim=self.get_parameter("cpu_sim").get_parameter_value().bool_value,
+            # CV cam
+            cv_exposure=self.get_parameter("cv_exposure")
+            .get_parameter_value()
+            .double_value,
+            enable_cv_cam=self.get_parameter("enable_cv_cam")
+            .get_parameter_value()
+            .bool_value,
+            cv_resolution_x=self.get_parameter("cv_resolution_x")
+            .get_parameter_value()
+            .integer_value,
+            cv_resolution_y=self.get_parameter("cv_resolution_y")
+            .get_parameter_value()
+            .integer_value,
+            cv_fov_horizontal=self.get_parameter("cv_fov_horizontal")
+            .get_parameter_value()
+            .integer_value,
+            cv_fov_vertical=self.get_parameter("cv_fov_vertical")
+            .get_parameter_value()
+            .integer_value,
+            cv_ray_tracing=self.get_parameter("cv_ray_tracing")
+            .get_parameter_value()
+            .bool_value,
+            # lidar
+            enable_lidar=self.get_parameter("enable_lidar")
+            .get_parameter_value()
+            .bool_value,
+            lidar_pointcloud_resolution=self.get_parameter(
+                "lidar_pointcloud_resolution"
+            )
+            .get_parameter_value()
+            .integer_value,
+        )
+
+        self.simulation = simulation.Simulation(**kwargs)
 
         self.control_mode = "programmatic"
         self.programmatic_desired_robot_state = utils.robot_state()

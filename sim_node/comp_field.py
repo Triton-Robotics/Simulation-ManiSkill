@@ -16,6 +16,7 @@ from mani_skill.utils.structs.render_camera import RenderCamera
 from mani_skill.utils.structs.pose import Pose
 
 from mani_skill.utils.structs.types import SimConfig
+from sim_node.infantry_robot import InfantryRobot
 
 package_dir = get_package_share_directory("sim_node")
 base_field_path = package_dir + "/resource/models/field/"
@@ -66,7 +67,21 @@ class CompFieldEnv(BaseEnv):
     def __init__(self, *args, robot_uids=("infantry"), **kwargs):
         self.field_elements = []
 
-        # self.sim_config = SimConfig(spacing=200)
+        self.robot_keyframes = kwargs.pop("robot_keyframes")
+        # cam stuff
+        self.enable_cv_cam = kwargs.pop("enable_cv_cam")
+        self.cv_exposure = kwargs.pop("cv_exposure")
+        self.cv_resolution_x = kwargs.pop("cv_resolution_x")
+        self.cv_resolution_y = kwargs.pop("cv_resolution_y")
+        self.cv_fov_horizontal = kwargs.pop("cv_fov_horizontal")
+        self.cv_fov_vertical = kwargs.pop("cv_fov_vertical")
+        self.cv_ray_tracing = kwargs.pop("cv_ray_tracing")
+        # lidar
+        self.enable_lidar = kwargs.pop("enable_lidar")
+        self.lidar_pointcloud_resolution = kwargs.pop("lidar_pointcloud_resolution")
+
+        # TODO one day fix parallel in single scene and how it breaks camera sensors on multi agent
+        # self._parallel_in_single_scene = kwargs.get("parallel_in_single_scene", False)
 
         kwargs["sim_config"] = SimConfig(spacing=15)
         super().__init__(*args, robot_uids=robot_uids, **kwargs)
@@ -83,14 +98,22 @@ class CompFieldEnv(BaseEnv):
 
     def _load_agent(self, options: dict):
         user_options = options.get("user", dict())
-        primary_agent = infantry_robot.InfantryRobot(
+        primary_agent = InfantryRobot(
             scene=self.scene,
             control_freq=self._control_freq,
             control_mode=self._control_mode,
             agent_idx=0,
-            initial_pose=sapien.Pose(p=[2, 1, 0]),
-            build_separate=True,
-            options=user_options.get("primary_robot", dict()),
+            initial_pose=sapien.Pose(p=[10, 10, 4]),
+            # build_separate=True,
+            enable_cv_cam=self.enable_cv_cam,
+            cv_ray_tracing=self.cv_ray_tracing,
+            cv_resolution_x=self.cv_resolution_x,
+            cv_resolution_y=self.cv_resolution_y,
+            cv_fov_horizontal=self.cv_fov_horizontal,
+            cv_fov_vertical=self.cv_fov_vertical,
+            enable_lidar=self.enable_lidar,
+            lidar_pointcloud_resolution=self.lidar_pointcloud_resolution,
+            keyframe=self.robot_keyframes[0],
         )
 
         secondary_agent = infantry_robot.InfantryRobot(
@@ -98,9 +121,8 @@ class CompFieldEnv(BaseEnv):
             control_freq=self._control_freq,
             control_mode=self._control_mode,
             agent_idx=1,
-            initial_pose=sapien.Pose(p=[1, 1, 0]),
-            build_separate=True,
-            options=user_options.get("secondary_robot", dict()),
+            initial_pose=sapien.Pose(p=[10, 10, 2]),
+            keyframe=self.robot_keyframes[1],
         )
 
         self.agent = MultiAgent(agents=[primary_agent, secondary_agent])

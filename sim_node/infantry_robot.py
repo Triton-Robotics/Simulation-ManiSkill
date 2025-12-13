@@ -33,12 +33,30 @@ class InfantryRobot(BaseAgent):
         agent_idx: str | None = None,
         initial_pose: Pose | Pose | None = None,
         build_separate: bool = False,
-        options: dict = [],
+        enable_cv_cam: bool = False,
+        cv_ray_tracing: bool = False,
+        cv_resolution_x: int = None,
+        cv_resolution_y: int = None,
+        cv_fov_horizontal: int = None,
+        cv_fov_vertical: int = None,
+        enable_lidar: bool = False,
+        lidar_pointcloud_resolution: int = None,
+        keyframe: str = None,
     ):
+
+        self.enable_cv_cam = enable_cv_cam
+        self.cv_ray_tracing = cv_ray_tracing
+        self.cv_resolution_x = cv_resolution_x
+        self.cv_resolution_y = cv_resolution_y
+        self.cv_fov_horizontal = cv_fov_horizontal
+        self.cv_fov_vertical = cv_fov_vertical
+        self.enable_lidar = enable_lidar
+        self.lidar_pointcloud_resolution = lidar_pointcloud_resolution
+        self.keyframe = keyframe
+
         super().__init__(
             scene, control_freq, control_mode, agent_idx, initial_pose, build_separate
         )
-        self.options = options
 
     default_pos = sapien.Pose(p=[0, 0, 0.25], q=[1, 0, 0, 0])
     default_pos.set_rpy([np.deg2rad(90), 0, np.deg2rad(45)])
@@ -63,10 +81,10 @@ class InfantryRobot(BaseAgent):
     def reset(self, init_qpos: Tensor = None):
         super().reset(init_qpos)
 
-        if "keyframe" in self.options:
-            desired_keyframe = self.options["keyframe"]
-            keyframe = self.keyframes[desired_keyframe]
-            self.robot.set_pose(keyframe.pose)
+        keyframe_str = self.keyframe if self.keyframe is not None else "default"
+        keyframe = self.keyframes[keyframe_str]
+
+        self.robot.set_pose(keyframe.pose)
 
     def _after_init(self):
         super()._after_init()
@@ -142,11 +160,11 @@ class InfantryRobot(BaseAgent):
     def _sensor_configs(self):
         sensors = []
         # CV camera sensor
-        if self.options.get("enable_cv_cam", False):
-            width = self.options["cv_resolution_x"]
-            height = self.options["cv_resolution_y"]
-            horizontal_fov = self.options["cv_fov_horizontal"]
-            vertical_fov = self.options["cv_fov_vertical"]
+        if self.enable_cv_cam:
+            width = self.cv_resolution_x
+            height = self.cv_resolution_y
+            horizontal_fov = self.cv_fov_horizontal
+            vertical_fov = self.cv_fov_vertical
             f_x = width / (2 * np.tan(np.radians(horizontal_fov) / 2))
             f_y = height / (2 * np.tan(np.radians(vertical_fov) / 2))
             c_x = width / 2
@@ -180,6 +198,7 @@ class InfantryRobot(BaseAgent):
                 texture_transforms=cv_texture_transforms,
             )
 
+            camera_link = self.robot.links_map["camera_link"]
             sensors.append(
                 CameraConfig(
                     uid="cv_camera_" + str(self._agent_idx),
@@ -189,16 +208,16 @@ class InfantryRobot(BaseAgent):
                     intrinsic=cv_camera_intrinsics,
                     near=0.01,
                     far=100,
-                    entity_uid="camera_link",
+                    mount=camera_link,
                     shader_config=(
                         cv_shader_config_rt
-                        if self.options["cv_ray_tracing"]
+                        if self.cv_ray_tracing
                         else cv_shader_config_raster
                     ),
                 )
             )
 
-        if self.options.get("enable_lidar", False):
+        if self.enable_lidar:
             # lidar simulated with multiple camera sensors
             pose0 = sapien.Pose()
             pose0.set_rpy([0, np.deg2rad(0), np.deg2rad(45)])
@@ -206,8 +225,8 @@ class InfantryRobot(BaseAgent):
             pose1 = sapien.Pose()
             pose1.set_rpy([0, np.deg2rad(0), np.deg2rad(-45)])
 
-            lidar_width_resolution = self.options["lidar_pointcloud_resolution"]
-            lidar_height_resolution = self.options["lidar_pointcloud_resolution"]
+            lidar_width_resolution = self.lidar_pointcloud_resolution
+            lidar_height_resolution = self.lidar_pointcloud_resolution
 
             lidar_camera_intrinsics = np.array(
                 [
@@ -243,6 +262,7 @@ class InfantryRobot(BaseAgent):
                 texture_transforms=lidar_texture_transforms,
             )
 
+            lidar_link = self.robot.links_map["lidar_link"]
             sensors.append(
                 CameraConfig(
                     uid="lidar_0_" + str(self._agent_idx),
@@ -252,7 +272,7 @@ class InfantryRobot(BaseAgent):
                     intrinsic=lidar_camera_intrinsics,
                     near=0.01,
                     far=100,
-                    entity_uid="lidar_link",
+                    mount=lidar_link,
                     shader_config=lidar_shader_config,
                 )
             )
@@ -265,7 +285,7 @@ class InfantryRobot(BaseAgent):
                     intrinsic=lidar_camera_intrinsics,
                     near=0.01,
                     far=100,
-                    entity_uid="lidar_link",
+                    mount=lidar_link,
                     shader_config=lidar_shader_config,
                 )
             )

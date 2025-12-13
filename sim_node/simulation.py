@@ -23,14 +23,14 @@ SPAWN_SCENARIO_KEYFRAME_MAPPING: dict = dict(
 
 class Simulation:
 
-    def __init__(self, options: dict, seed=2930):
-        self.options = dict(reconfigure=True, user=options)
-        self.should_render_gui = self.options["user"]["human_gui"]
-        cpu_sim = self.options["user"]["cpu_sim"]
+    def __init__(self, seed=2930, **kwargs):
+        self.should_render_gui = kwargs.pop("human_gui")
+        cpu_sim = kwargs.pop("cpu_sim")
 
         sim_config = SimConfig()
-        sim_config.control_freq = self.options["user"]["control_freq"]
-        sim_config.sim_freq = self.options["user"]["sim_freq"]
+        SimConfig.control_freq = kwargs.pop("control_freq")
+        sim_config.sim_freq = kwargs.pop("sim_freq")
+
         self.env: BaseEnv = gym.make(
             "comp_field",  # This should map to your registered environment
             render_mode=("human" if self.should_render_gui else None),
@@ -39,25 +39,16 @@ class Simulation:
             sim_config=sim_config,
             sim_backend="physx_cpu" if cpu_sim else "auto",
             render_backend="sapien_cpu" if cpu_sim else "sapien_cuda",
-            num_envs=2,
+            # num_envs=2,
             # parallel_in_single_scene=True,
+            **kwargs,
         )
-
-        spawn_scenario: str = self.options["user"]["spawn_scenario"]
-        primary_robot_keyframe = SPAWN_SCENARIO_KEYFRAME_MAPPING[spawn_scenario][
-            "primary_robot"
-        ]
-        secondary_robot_keyframe = SPAWN_SCENARIO_KEYFRAME_MAPPING[spawn_scenario][
-            "secondary_robot"
-        ]
-        self.options["user"]["primary_robot"]["keyframe"] = primary_robot_keyframe
-        self.options["user"]["secondary_robot"]["keyframe"] = secondary_robot_keyframe
 
         self.base_env: BaseEnv = self.env
         # TODO dont make this none make it the initial reset obs instead
         self.past_obs = None
 
-        obs, _ = self.env.reset(seed=seed, options=self.options)
+        obs, _ = self.env.reset(seed=seed)
 
     def step(
         self,
@@ -102,15 +93,15 @@ class Simulation:
         )
 
         primary_robot_action_batched = primary_robot_action.unsqueeze(0).expand(
-            self.env.num_envs, -1
+            self.env.unwrapped.num_envs, -1
         )
         secondary_robot_action_batched = secondary_robot_action.unsqueeze(0).expand(
-            self.env.num_envs, -1
+            self.env.unwrapped.num_envs, -1
         )
 
         action = {
-            "infantry-0": primary_robot_action_batched.cpu().numpy(),
-            "infantry-1": secondary_robot_action_batched.cpu().numpy(),
+            "infantry-0": primary_robot_action_batched,
+            "infantry-1": secondary_robot_action_batched,
         }
 
         obs, reward, terminated, truncated, info = self.env.step(action=action)
