@@ -3,7 +3,7 @@ import mani_skill.envs
 from mani_skill.envs.sapien_env import BaseEnv
 from mani_skill.agents.base_agent import BaseAgent
 from mani_skill.agents.multi_agent import MultiAgent
-from sim_node import comp_field
+from sim_node import ARC2026_env
 import numpy as np
 from sim_node import utils
 from mani_skill.utils.structs import SimConfig
@@ -32,7 +32,7 @@ class Simulation:
         sim_config.sim_freq = kwargs.pop("sim_freq")
 
         self.env: BaseEnv = gym.make(
-            "comp_field",  # This should map to your registered environment
+            "ARC2026",
             render_mode=("human" if self.should_render_gui else None),
             reward_mode="sparse",
             obs_mode="state_dict+rgb+segmentation+position",

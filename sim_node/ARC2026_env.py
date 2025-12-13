@@ -15,6 +15,9 @@ from mani_skill.sensors.camera import Camera
 from mani_skill.utils.structs.render_camera import RenderCamera
 from mani_skill.utils.structs.pose import Pose
 
+from mani_skill.utils.structs.types import SimConfig
+from sim_node.infantry_robot import InfantryRobot
+
 package_dir = get_package_share_directory("sim_node")
 base_field_path = package_dir + "/resource/models/field/"
 
@@ -58,30 +61,59 @@ urdf_path_and_names = [
 ]
 
 
-@register_env("comp_field")
+@register_env("ARC2026")
 class CompFieldEnv(BaseEnv):
 
     def __init__(self, *args, robot_uids=("infantry"), **kwargs):
         self.field_elements = []
+
+        self.robot_keyframes = kwargs.pop("robot_keyframes")
+        # cam stuff
+        self.enable_cv_cam = kwargs.pop("enable_cv_cam")
+        self.cv_exposure = kwargs.pop("cv_exposure")
+        self.cv_resolution_x = kwargs.pop("cv_resolution_x")
+        self.cv_resolution_y = kwargs.pop("cv_resolution_y")
+        self.cv_fov_horizontal = kwargs.pop("cv_fov_horizontal")
+        self.cv_fov_vertical = kwargs.pop("cv_fov_vertical")
+        self.cv_ray_tracing = kwargs.pop("cv_ray_tracing")
+        # lidar
+        self.enable_lidar = kwargs.pop("enable_lidar")
+        self.lidar_pointcloud_resolution = kwargs.pop("lidar_pointcloud_resolution")
+
+        # TODO one day fix parallel in single scene and how it breaks camera sensors on multi agent
+        # self._parallel_in_single_scene = kwargs.get("parallel_in_single_scene", False)
+
+        kwargs["sim_config"] = SimConfig(spacing=15)
         super().__init__(*args, robot_uids=robot_uids, **kwargs)
 
     def _get_obs_extra(self, info: Dict):
         return dict(
-            sim_timestamp=(info["elapsed_steps"] * self.control_timestep).item(),
+            sim_timestamp=(info["elapsed_steps"][0] * self.control_timestep).item(),
             primary_robot=self.agent.agents[0].get_ground_truth_obs(),
             secondary_robot=self.agent.agents[1].get_ground_truth_obs(),
         )
 
+    # def _default_sim_config(self):
+    #     return SimConfig(spacing=20)
+
     def _load_agent(self, options: dict):
         user_options = options.get("user", dict())
-        primary_agent = infantry_robot.InfantryRobot(
+        primary_agent = InfantryRobot(
             scene=self.scene,
             control_freq=self._control_freq,
             control_mode=self._control_mode,
             agent_idx=0,
-            initial_pose=sapien.Pose(p=[2, 1, 0]),
-            build_separate=True,
-            options=user_options.get("primary_robot", dict()),
+            initial_pose=sapien.Pose(p=[10, 10, 4]),
+            # build_separate=True,
+            enable_cv_cam=self.enable_cv_cam,
+            cv_ray_tracing=self.cv_ray_tracing,
+            cv_resolution_x=self.cv_resolution_x,
+            cv_resolution_y=self.cv_resolution_y,
+            cv_fov_horizontal=self.cv_fov_horizontal,
+            cv_fov_vertical=self.cv_fov_vertical,
+            enable_lidar=self.enable_lidar,
+            lidar_pointcloud_resolution=self.lidar_pointcloud_resolution,
+            keyframe=self.robot_keyframes[0],
         )
 
         secondary_agent = infantry_robot.InfantryRobot(
@@ -89,22 +121,21 @@ class CompFieldEnv(BaseEnv):
             control_freq=self._control_freq,
             control_mode=self._control_mode,
             agent_idx=1,
-            initial_pose=sapien.Pose(p=[1, 1, 0]),
-            build_separate=True,
-            options=user_options.get("secondary_robot", dict()),
+            initial_pose=sapien.Pose(p=[10, 10, 2]),
+            keyframe=self.robot_keyframes[1],
         )
 
         self.agent = MultiAgent(agents=[primary_agent, secondary_agent])
 
-    def _step_action(
-        self, action: None | np.ndarray | infantry_robot.Tensor | Dict
-    ) -> None | infantry_robot.Tensor:
-        plate_poses = self.agent.agents[0].get_armor_panel_poses()
+    # def _step_action(
+    #     self, action: None | np.ndarray | infantry_robot.Tensor | Dict
+    # ) -> None | infantry_robot.Tensor:
+    #     plate_poses = self.agent.agents[0].get_armor_panel_poses()
 
-        # cube = self.scene.actors["debug_cube"]
-        # cube.set_pose(plate_poses[3])
+    #     # cube = self.scene.actors["debug_cube"]
+    #     # cube.set_pose(plate_poses[3])
 
-        return super()._step_action(action)
+    #     return super()._step_action(None)
 
     def _load_lighting(self, options: dict):
         # self.scene.set_ambient_light([0.05, 0.05, 0.05])
@@ -186,7 +217,7 @@ class CompFieldEnv(BaseEnv):
     def _initialize_episode(self, env_idx, options):
         # pass
         for e in self.field_elements:
-            e.set_pose(sapien.Pose(p=[0, 0, 0], q=e.pose.sp.q))
+            e.set_pose(sapien.Pose(p=[0, 0, 0], q=e.pose[0].sp.q))
         # TODO: it might be possible to randomize field element positions, however there are issues with it rn
         # for e in self.field_elements:
         #     p = torch.rand((3))
@@ -212,7 +243,7 @@ class CompFieldEnv(BaseEnv):
         floor_visual_builder = self.scene.create_actor_builder()
         floor_visual_builder.add_visual_from_file(filename=base_field_path + floor_gltf)
         floor_visual_builder.set_initial_pose(sapien.Pose(p=[0, 0, 1]))
-        floor_obj = floor_visual_builder.build_static(name="floor")
+        floor_obj = floor_visual_builder.build_kinematic(name="floor")
         self.field_elements.append(floor_obj)
 
         for i, name in enumerate(field_gltfs):
@@ -233,7 +264,7 @@ class CompFieldEnv(BaseEnv):
             # prevents collisions on startup of environment
             pos = [0, 0, 3 * (i + 1)]
             field_element_builder.set_initial_pose(sapien.Pose(p=pos))
-            field_element = field_element_builder.build_static(name)
+            field_element = field_element_builder.build_kinematic(name)
             self.field_elements.append(field_element)
 
         # self.field = field_visual_builder.build_static(name)
