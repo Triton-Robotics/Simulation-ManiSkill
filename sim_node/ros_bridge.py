@@ -95,54 +95,6 @@ class Sim_Node(Node):
         self.clock_msg.clock.sec = 0
         self.clock_msg.clock.nanosec = 0
 
-        options = dict(
-            # general simulation options
-            spawn_scenario=self.get_parameter("spawn_scenario")
-            .get_parameter_value()
-            .string_value,
-            human_gui=self.get_parameter("human_gui").get_parameter_value().bool_value,
-            cv_exposure=self.get_parameter("cv_exposure")
-            .get_parameter_value()
-            .double_value,
-            control_freq=self.get_parameter("control_freq")
-            .get_parameter_value()
-            .integer_value,
-            sim_freq=self.get_parameter("sim_freq").get_parameter_value().integer_value,
-            cpu_sim=self.get_parameter("cpu_sim").get_parameter_value().bool_value,
-            primary_robot=dict(
-                # cv cam options
-                enable_cv_cam=self.get_parameter("enable_cv_cam")
-                .get_parameter_value()
-                .bool_value,
-                cv_resolution_x=self.get_parameter("cv_resolution_x")
-                .get_parameter_value()
-                .integer_value,
-                cv_resolution_y=self.get_parameter("cv_resolution_y")
-                .get_parameter_value()
-                .integer_value,
-                cv_fov_horizontal=self.get_parameter("cv_fov_horizontal")
-                .get_parameter_value()
-                .integer_value,
-                cv_fov_vertical=self.get_parameter("cv_fov_vertical")
-                .get_parameter_value()
-                .integer_value,
-                cv_ray_tracing=self.get_parameter("cv_ray_tracing")
-                .get_parameter_value()
-                .bool_value,
-                # lidar options
-                enable_lidar=self.get_parameter("enable_lidar")
-                .get_parameter_value()
-                .bool_value,
-                lidar_pointcloud_resolution=self.get_parameter(
-                    "lidar_pointcloud_resolution"
-                )
-                .get_parameter_value()
-                .integer_value,
-            ),
-            # second robot is just used as target practice so we dont care about its sensors
-            secondary_robot=dict(enable_cv_cam=False, enable_lidar=False),
-        )
-
         spawn_scenario = (
             self.get_parameter("spawn_scenario").get_parameter_value().string_value
         )
