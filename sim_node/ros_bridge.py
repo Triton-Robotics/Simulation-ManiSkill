@@ -21,6 +21,9 @@ from torch import Tensor
 
 from sim_node.simulation import SPAWN_SCENARIO_KEYFRAME_MAPPING
 
+from mani_skill.utils.structs import SimConfig
+from sim_node.ARC2026_env import ARC2026EnvConfig
+
 
 class Sim_Node(Node):
     def __init__(self):
@@ -91,61 +94,45 @@ class Sim_Node(Node):
         self.ros_clock_pub = self.create_publisher(
             msg_type=Clock, topic="/clock", qos_profile=10
         )
+
         self.clock_msg = Clock()
         self.clock_msg.clock.sec = 0
         self.clock_msg.clock.nanosec = 0
 
+        sim_config = SimConfig()
+        sim_config.control_freq = self.gp("control_freq").integer_value
+        sim_config.sim_freq = self.gp("sim_freq").integer_value
+        sim_config.spacing = 15
+
         spawn_scenario = (
             self.get_parameter("spawn_scenario").get_parameter_value().string_value
         )
-
         robot_keyframes = [
             SPAWN_SCENARIO_KEYFRAME_MAPPING[spawn_scenario]["primary_robot"],
             SPAWN_SCENARIO_KEYFRAME_MAPPING[spawn_scenario]["secondary_robot"],
         ]
-
-        kwargs = dict(
+        # fmt: off
+        arc2026_env_config = ARC2026EnvConfig(
             robot_keyframes=robot_keyframes,
-            human_gui=self.get_parameter("human_gui").get_parameter_value().bool_value,
-            control_freq=self.get_parameter("control_freq")
-            .get_parameter_value()
-            .integer_value,
-            sim_freq=self.get_parameter("sim_freq").get_parameter_value().integer_value,
-            cpu_sim=self.get_parameter("cpu_sim").get_parameter_value().bool_value,
-            # CV cam
-            cv_exposure=self.get_parameter("cv_exposure")
-            .get_parameter_value()
-            .double_value,
-            enable_cv_cam=self.get_parameter("enable_cv_cam")
-            .get_parameter_value()
-            .bool_value,
-            cv_resolution_x=self.get_parameter("cv_resolution_x")
-            .get_parameter_value()
-            .integer_value,
-            cv_resolution_y=self.get_parameter("cv_resolution_y")
-            .get_parameter_value()
-            .integer_value,
-            cv_fov_horizontal=self.get_parameter("cv_fov_horizontal")
-            .get_parameter_value()
-            .integer_value,
-            cv_fov_vertical=self.get_parameter("cv_fov_vertical")
-            .get_parameter_value()
-            .integer_value,
-            cv_ray_tracing=self.get_parameter("cv_ray_tracing")
-            .get_parameter_value()
-            .bool_value,
-            # lidar
-            enable_lidar=self.get_parameter("enable_lidar")
-            .get_parameter_value()
-            .bool_value,
-            lidar_pointcloud_resolution=self.get_parameter(
-                "lidar_pointcloud_resolution"
-            )
-            .get_parameter_value()
-            .integer_value,
+            enable_cv_cam=                  self.gp("enable_cv_cam").bool_value,
+            cv_exposure=                    self.gp("cv_exposure").double_value,
+            cv_ray_tracing=                 self.gp("cv_ray_tracing").bool_value,
+            cv_resolution_x=                self.gp("cv_resolution_x").integer_value,
+            cv_resolution_y=                self.gp("cv_resolution_y").integer_value,
+            cv_fov_horizontal=              self.gp("cv_fov_horizontal").integer_value,
+            cv_fov_vertical=                self.gp("cv_fov_vertical").integer_value,
+            enable_lidar=                   self.gp("enable_lidar").bool_value,
+            lidar_pointcloud_resolution=    self.gp("lidar_pointcloud_resolution").integer_value,
         )
+        # fmt: on
 
-        self.simulation = simulation.Simulation(**kwargs)
+        self.simulation = simulation.Simulation(
+            seed=2930,
+            cpu_sim=self.gp("cpu_sim").bool_value,
+            human_gui=self.gp("human_gui").bool_value,
+            sim_config=sim_config,
+            arc2026_env_config=arc2026_env_config,
+        )
 
         self.control_mode = "programmatic"
         self.programmatic_desired_robot_state = utils.robot_state()
@@ -339,6 +326,9 @@ class Sim_Node(Node):
 
         pc2_msg = point_cloud2.create_cloud(header, fields, point_iter)
         return pc2_msg
+
+    def gp(self, ros_param: str):
+        return self.get_parameter(ros_param).get_parameter_value()
 
 
 def main(args=None):

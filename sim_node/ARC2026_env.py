@@ -40,6 +40,22 @@ field_gltfs = [
     "2026_ARC_3v3_small_ramp_left.gltf",
 ]
 
+from dataclasses import dataclass
+
+
+@dataclass
+class ARC2026EnvConfig:
+    robot_keyframes: list
+    enable_cv_cam: bool
+    cv_exposure: float
+    cv_resolution_x: int
+    cv_resolution_y: int
+    cv_fov_horizontal: int
+    cv_fov_vertical: int
+    cv_ray_tracing: bool
+    enable_lidar: bool
+    lidar_pointcloud_resolution: int
+
 
 @register_env("ARC2026")
 class ARC2026Env(BaseEnv):
@@ -47,23 +63,12 @@ class ARC2026Env(BaseEnv):
     def __init__(self, *args, robot_uids=("infantry"), **kwargs):
         self.field_elements = []
 
-        self.robot_keyframes = kwargs.pop("robot_keyframes")
-        # cam stuff
-        self.enable_cv_cam = kwargs.pop("enable_cv_cam")
-        self.cv_exposure = kwargs.pop("cv_exposure")
-        self.cv_resolution_x = kwargs.pop("cv_resolution_x")
-        self.cv_resolution_y = kwargs.pop("cv_resolution_y")
-        self.cv_fov_horizontal = kwargs.pop("cv_fov_horizontal")
-        self.cv_fov_vertical = kwargs.pop("cv_fov_vertical")
-        self.cv_ray_tracing = kwargs.pop("cv_ray_tracing")
-        # lidar
-        self.enable_lidar = kwargs.pop("enable_lidar")
-        self.lidar_pointcloud_resolution = kwargs.pop("lidar_pointcloud_resolution")
+        self.arc2026_env_config: ARC2026EnvConfig = kwargs.pop("arc2026_env_config")
+
 
         # TODO one day fix parallel in single scene and how it breaks camera sensors on multi agent
         # self._parallel_in_single_scene = kwargs.get("parallel_in_single_scene", False)
 
-        kwargs["sim_config"] = SimConfig(spacing=15)
         super().__init__(*args, robot_uids=robot_uids, **kwargs)
 
     def _get_obs_extra(self, info: Dict):
@@ -82,15 +87,15 @@ class ARC2026Env(BaseEnv):
             agent_idx=0,
             initial_pose=sapien.Pose(p=[10, 10, 4]),
             # build_separate=True,
-            enable_cv_cam=self.enable_cv_cam,
-            cv_ray_tracing=self.cv_ray_tracing,
-            cv_resolution_x=self.cv_resolution_x,
-            cv_resolution_y=self.cv_resolution_y,
-            cv_fov_horizontal=self.cv_fov_horizontal,
-            cv_fov_vertical=self.cv_fov_vertical,
-            enable_lidar=self.enable_lidar,
-            lidar_pointcloud_resolution=self.lidar_pointcloud_resolution,
-            keyframe=self.robot_keyframes[0],
+            enable_cv_cam=self.arc2026_env_config.enable_cv_cam,
+            cv_ray_tracing=self.arc2026_env_config.cv_ray_tracing,
+            cv_resolution_x=self.arc2026_env_config.cv_resolution_x,
+            cv_resolution_y=self.arc2026_env_config.cv_resolution_y,
+            cv_fov_horizontal=self.arc2026_env_config.cv_fov_horizontal,
+            cv_fov_vertical=self.arc2026_env_config.cv_fov_vertical,
+            enable_lidar=self.arc2026_env_config.enable_lidar,
+            lidar_pointcloud_resolution=self.arc2026_env_config.lidar_pointcloud_resolution,
+            keyframe=self.arc2026_env_config.robot_keyframes[0],
         )
 
         secondary_agent = infantry_robot.InfantryRobot(
@@ -99,7 +104,7 @@ class ARC2026Env(BaseEnv):
             control_mode=self._control_mode,
             agent_idx=1,
             initial_pose=sapien.Pose(p=[10, 10, 2]),
-            keyframe=self.robot_keyframes[1],
+            keyframe=self.arc2026_env_config.robot_keyframes[1],
         )
 
         self.agent = MultiAgent(agents=[primary_agent, secondary_agent])
@@ -227,4 +232,4 @@ class ARC2026Env(BaseEnv):
             if "cv_camera" in name:
                 sensor: Camera
                 render_cam: RenderCamera = sensor.camera
-                render_cam.set_property("exposure", self.cv_exposure)
+                render_cam.set_property("exposure", self.arc2026_env_config.cv_exposure)

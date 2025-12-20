@@ -25,17 +25,22 @@ SPAWN_SCENARIO_KEYFRAME_MAPPING: dict = dict(
 
 class Simulation:
 
-    def __init__(self, seed=2930, **kwargs):
-        self.should_render_gui = kwargs.pop("human_gui")
-        cpu_sim = kwargs.pop("cpu_sim")
+    def __init__(
+        self,
+        seed,
+        cpu_sim,
+        human_gui,
+        sim_config: SimConfig,
+        arc2026_env_config: ARC2026_env.ARC2026EnvConfig,
+    ):
+        self.human_gui_enabled = human_gui
 
-        sim_config = SimConfig()
-        SimConfig.control_freq = kwargs.pop("control_freq")
-        sim_config.sim_freq = kwargs.pop("sim_freq")
+        # arc2026 env specific config
+        self.arc2026_env_config = arc2026_env_config
 
         self.env: BaseEnv = gym.make(
             "ARC2026",
-            render_mode=("human" if self.should_render_gui else None),
+            render_mode=("human" if self.human_gui_enabled else None),
             reward_mode="sparse",
             obs_mode="state_dict+rgb+segmentation+position",
             sim_config=sim_config,
@@ -43,7 +48,7 @@ class Simulation:
             render_backend="sapien_cpu" if cpu_sim else "sapien_cuda",
             # num_envs=2,
             # parallel_in_single_scene=True,
-            **kwargs,
+            arc2026_env_config=arc2026_env_config,
         )
 
         self.base_env: BaseEnv = self.env
@@ -107,7 +112,7 @@ class Simulation:
         }
 
         obs, reward, terminated, truncated, info = self.env.step(action=action)
-        if self.should_render_gui:
+        if self.human_gui_enabled:
             self.env.render()
 
         self.past_obs = obs
