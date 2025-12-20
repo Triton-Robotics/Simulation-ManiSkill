@@ -81,23 +81,18 @@ class Sim_Node(Node):
         qos_profile = rclpy.qos.qos_profile_sensor_data
         qos_profile.depth = 1
         self.image_pub = self.create_publisher(Image, "camera/image", qos_profile)
-        control_freq = (
-            self.get_parameter("control_freq").get_parameter_value().integer_value
-        )
-        sim_time_scale = (
-            self.get_parameter("sim_time_scale").get_parameter_value().double_value
-        )
+
+        control_freq = self.gp("control_freq").integer_value
+        sim_time_scale = self.gp("sim_time_scale").double_value
         # TODO make sure this is set correctly
         self.simulation_timer = self.create_timer(
             1 / (control_freq * sim_time_scale), self.simulation_callback
         )
+
         self.ros_clock_pub = self.create_publisher(
             msg_type=Clock, topic="/clock", qos_profile=10
         )
-
         self.clock_msg = Clock()
-        self.clock_msg.clock.sec = 0
-        self.clock_msg.clock.nanosec = 0
 
         sim_config = SimConfig()
         sim_config.control_freq = self.gp("control_freq").integer_value
@@ -165,11 +160,9 @@ class Sim_Node(Node):
         sim_ground_truth_msg.step_sim = (t2 - t1) * 1000
 
         robot_state_position: Tensor = obs["agent"]["infantry-0"]["qpos"]
-        # robot_state_position = robot_state_position.squeeze(0)  # remove batch dimension
 
-        # FIX ME THIS IS INCORRECT
+        # TODO FIX ME THIS IS INCORRECT (i forgot why it was incorrect lol, maybe coordinate frame?)
         robot_state_velocity: Tensor = obs["agent"]["infantry-0"]["qvel"]
-        # robot_state_velocity = robot_state_velocity.squeeze(0)  # remove batch dimension
 
         self.last_recorded_robot_state = utils.robot_state(
             x_vel=robot_state_velocity[0][0].item(),
@@ -183,10 +176,7 @@ class Sim_Node(Node):
             t1 = time.perf_counter()
             rgb_tensor = obs["sensor_data"]["cv_camera_0"]["rgb"]
             rgb_tensor: torch.Tensor
-            # rgb_tensor = rgb_tensor.squeeze(0)  # remove batch dimension
             rgb_array = rgb_tensor[0].numpy(force=True)
-
-            # rgb_array = rgb_tensor.numpy(force=True)
 
             if rgb_array.shape[0] == 3:  # If first dimension is 3, it's (C, H, W)
                 rgb_array = rgb_array.transpose(1, 2, 0)  # Convert to (H, W, C)
@@ -272,6 +262,9 @@ class Sim_Node(Node):
         response.success = True
         return response
 
+    # TODO refactor the whole teleop vs "programmatic" input stuff
+    # everything should publish to the same topic (WriteChassis and WriteGimbal)
+    # we can have a different topic for "debug" simulation controls such as controlling 2-3 non primary robots
     def primary_robot_teleop_callback(self, msg):
         received_state = utils.robot_state(
             # pitch is negated so negative pitch means down
@@ -298,7 +291,7 @@ class Sim_Node(Node):
     def points_to_ros_pointcloud2(self, points):
 
         header = Header()
-        # TODO FIX ME
+        # TODO FIX ME (i think this is saying use sim time?)
         header.stamp = self.get_clock().now().to_msg()
         header.frame_id = "map"
 
@@ -308,7 +301,6 @@ class Sim_Node(Node):
         field_x.datatype = PointField.FLOAT32
         field_x.count = 1
 
-        # Do the same for 'y' and 'z':
         field_y = PointField()
         field_y.name = "y"
         field_y.offset = 4
