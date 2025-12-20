@@ -42,7 +42,7 @@ field_gltfs = [
 
 
 @register_env("ARC2026")
-class CompFieldEnv(BaseEnv):
+class ARC2026Env(BaseEnv):
 
     def __init__(self, *args, robot_uids=("infantry"), **kwargs):
         self.field_elements = []
