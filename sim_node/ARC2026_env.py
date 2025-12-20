@@ -301,9 +301,8 @@ class CompFieldEnv(BaseEnv):
     def _after_reconfigure(self, options):
         super()._after_reconfigure(options)
 
-        if "user" in options:
-            for name, sensor in self._sensors.items():
-                if "cv_camera" in name:
-                    sensor: Camera
-                    render_cam: RenderCamera = sensor.camera
-                    render_cam.set_property("exposure", options["user"]["cv_exposure"])
+        for name, sensor in self._sensors.items():
+            if "cv_camera" in name:
+                sensor: Camera
+                render_cam: RenderCamera = sensor.camera
+                render_cam.set_property("exposure", self.cv_exposure)
