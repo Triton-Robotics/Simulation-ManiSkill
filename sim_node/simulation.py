@@ -9,6 +9,8 @@ from sim_node import utils
 from mani_skill.utils.structs import SimConfig
 import torch
 
+
+# TODO: rename this to something like task could then also use this to determine different environments
 SPAWN_SCENARIO_KEYFRAME_MAPPING: dict = dict(
     center_1v1=dict(
         primary_robot="default",
