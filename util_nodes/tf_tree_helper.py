@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from geometry_msgs.msg import TransformStamped, Transform
 
 import rclpy
@@ -66,6 +67,8 @@ class FramePublisher(Node):
         self.tf_broadcaster.sendTransform(t)
 
 def main():
+    print("running sim node tf helper")
+    
     rclpy.init()
     node = FramePublisher()
     try:
@@ -73,4 +76,8 @@ def main():
     except KeyboardInterrupt:
         pass
 
-    rclpy.shutdown()
+    print("shutting down sim node tf helper")
+    node.destroy_node()
+    rclpy.try_shutdown()
+    
+main()

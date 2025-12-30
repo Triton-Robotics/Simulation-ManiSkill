@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
 from tr_messages.msg import SimTeleopInput
@@ -182,6 +183,15 @@ class KeyboardControls(Node):
 def main(args=None):
     rclpy.init()
     node = KeyboardControls()
-    rclpy.spin(node=node)
+
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    
+    print("shutting down sim node keyboard controls")
     node.destroy_node()
-    rclpy.shutdown()
+    rclpy.try_shutdown()
+
+
+main()

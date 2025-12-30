@@ -323,9 +323,3 @@ class Sim_Node(Node):
         return self.get_parameter(ros_param).get_parameter_value()
 
 
-def main(args=None):
-    rclpy.init(args=args)
-    sim_node = Sim_Node()
-    rclpy.spin(sim_node)
-    sim_node.destroy_node()
-    rclpy.shutdown()
