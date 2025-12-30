@@ -82,7 +82,7 @@ def generate_launch_description():
 
     node = Node(
         package="sim_node",
-        executable="sim_node",
+        executable="main.py",
         parameters=[
             {
                 "human_gui": LaunchConfiguration("human_gui"),

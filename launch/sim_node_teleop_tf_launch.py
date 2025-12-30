@@ -5,6 +5,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 from ament_index_python.packages import get_package_share_directory
 
+
 def generate_launch_description():
     # TODO: Remove this file (redundant to teleop launch)
     ld = LaunchDescription()
@@ -17,8 +18,12 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(launch_file_path=sim_launch_path)
     )
 
-    tf_helper_node = Node(package="sim_node", executable="tf_tree_helper")
-    keyboard_controls_node = Node(package="sim_node", executable="keyboard_controls")
+    tf_helper_node = Node(
+        package="sim_node", executable="tf_tree_helper.py", output="screen"
+    )
+    keyboard_controls_node = Node(
+        package="sim_node", executable="keyboard_controls.py", output="screen"
+    )
 
     ld.add_action(sim_launch)
     ld.add_action(keyboard_controls_node)
