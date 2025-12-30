@@ -79,5 +79,6 @@ def main():
     print("shutting down sim node tf helper")
     node.destroy_node()
     rclpy.try_shutdown()
-    
-main()
+   
+if __name__ == "__main__": 
+    main()

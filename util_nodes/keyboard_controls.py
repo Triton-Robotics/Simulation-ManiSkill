@@ -181,6 +181,7 @@ class KeyboardControls(Node):
 
 
 def main(args=None):
+    print("running sim node keyboard controls")
     rclpy.init()
     node = KeyboardControls()
 
@@ -193,5 +194,5 @@ def main(args=None):
     node.destroy_node()
     rclpy.try_shutdown()
 
-
-main()
+if __name__ == "__main__":
+    main()   
