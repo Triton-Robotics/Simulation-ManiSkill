@@ -1,4 +1,3 @@
-
 cmake_minimum_required(VERSION 3.14)
 project(sim_node)
 
@@ -38,6 +37,5 @@ install(DIRECTORY
   resource/
   DESTINATION share/${PROJECT_NAME}/resource
 )
-
 
 ament_package()
