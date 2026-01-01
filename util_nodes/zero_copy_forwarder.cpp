@@ -21,7 +21,7 @@ class ZeroCopyForwarder : public rclcpp::Node {
             custom_qos.durability(rclcpp::DurabilityPolicy::Volatile);
             custom_qos.history(rclcpp::HistoryPolicy::KeepLast);
             this->subscriber_ = this->create_subscription<sensor_msgs::msg::Image>("camera/image", custom_qos, 
-                            std::bind(&this->forwardCallback, this, std::placeholders::_1));
+                            std::bind(&ZeroCopyForwarder::forwardCallback, this, std::placeholders::_1));
             this->sharedImageWriter_ = std::make_unique<SharedImageWriter>("camera_image", 1200, 1920, 3, "CV_8U");
         }
     
