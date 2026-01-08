@@ -1,7 +1,7 @@
 import time
 import rclpy
 from rclpy.node import Node
-from tr_messages.srv import WriteSerial, ListenSerial
+from tr_messages.srv import WriteSerial, ListenSerial, LidarOdometry
 from tr_messages.msg import SimTeleopInput, RobotGroundTruth, SimGroundTruth
 from sensor_msgs.msg import Image
 from sim_node import simulation
@@ -11,7 +11,7 @@ from std_msgs.msg import Header
 from sensor_msgs_py import point_cloud2  # pointcloud utilizes
 from rosgraph_msgs.msg import Clock
 from tf2_msgs.msg import TFMessage
-from geometry_msgs.msg import TransformStamped
+from geometry_msgs.msg import TransformStamped, Pose
 from sim_node import utils, constants
 import numpy as np
 
@@ -73,6 +73,10 @@ class Sim_Node(Node):
         self.listen_service = self.create_service(
             ListenSerial, "read_robot_state", self.read_robot_state
         )
+        self.lidar_odometry_service = self.create_service(
+            LidarOdometry, "lidar_odometry", self.lidar_odometry_service
+        )
+        self.lidar_pose_queue = []
 
         self.ground_truth_pub = self.create_publisher(
             SimGroundTruth, "simulation/ground_truth", 10
@@ -234,6 +238,16 @@ class Sim_Node(Node):
         sim_ground_truth_msg.theoretical_fps = 1 / (end - start)
         self.ground_truth_pub.publish(sim_ground_truth_msg)
 
+        # lidar odometry service
+        lidar_odometry_pos = Pose()
+        utils.populate_pose_msg_from_batched_pose_tensor(
+            lidar_odometry_pos, obs["extra"]["primary_robot"]["lidar_pose"]
+        )
+        self.lidar_pose_queue.append((sim_timestamp, lidar_odometry_pos))
+        # remove elements older than 100ms
+        while self.lidar_pose_queue[0][0] < sim_timestamp - 0.1:
+            self.lidar_pose_queue.pop(0)
+
     def read_robot_state(self, request, response):
         # TODO make a buffer and respond based off the time in the request
         # TOOD add angular vel and pitch and yaw vel
@@ -259,6 +273,19 @@ class Sim_Node(Node):
             request.angular_vel / constants.MAX_ANGULAR_VEL_RADS_S,
         )
 
+        response.success = True
+        return response
+
+    # TODO this is monkey tier janky please fix this at some point
+    def lidar_odometry_service(self, request, response):
+        request_time = request.request_time.sec + request.request_time.nanosec / 1e9
+
+        closest = self.lidar_pose_queue[0]
+        for i in self.lidar_pose_queue:
+            if abs(i[0] - request_time) < abs(closest[0] - request_time):
+                closest = i
+
+        response.pose = closest[1]
         response.success = True
         return response
 
@@ -321,5 +348,3 @@ class Sim_Node(Node):
 
     def gp(self, ros_param: str):
         return self.get_parameter(ros_param).get_parameter_value()
-
-
