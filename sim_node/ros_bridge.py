@@ -2,7 +2,7 @@ import time
 import rclpy
 from rclpy.node import Node
 from tr_messages.srv import WriteSerial, ListenSerial, LidarOdometry
-from tr_messages.msg import SimTeleopInput, RobotGroundTruth, SimGroundTruth
+from tr_messages.msg import SimTeleopInput, RobotGroundTruth, SimGroundTruth, WriteChassis
 from sensor_msgs.msg import Image
 from sim_node import simulation
 
@@ -64,6 +64,13 @@ class Sim_Node(Node):
             SimTeleopInput,
             "simulation/secondary_robot_teleop",
             self.secondary_robot_teleop_callback,
+            10,
+        )
+
+        self.write_chassis_sub = self.create_subscription(
+            WriteChassis,
+            "write_chassis",
+            self.write_chassis_callback,
             10,
         )
 
@@ -288,6 +295,21 @@ class Sim_Node(Node):
         response.pose = closest[1]
         response.success = True
         return response
+
+    # TODO this is jank need to rewrite the whole programmatic vs teleop system
+    def write_chassis_callback(self, msg):
+        msg: WriteChassis
+
+        state = utils.robot_state(
+            pitch=0,
+            yaw=0,
+            x_vel=msg.x_vel,
+            y_vel=msg.y_vel,
+            angular_vel=msg.angular_vel,
+        )
+
+        self.programmatic_desired_robot_state = state
+        self.control_mode = "programmatic"
 
     # TODO refactor the whole teleop vs "programmatic" input stuff
     # everything should publish to the same topic (WriteChassis and WriteGimbal)
