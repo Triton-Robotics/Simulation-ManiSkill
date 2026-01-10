@@ -24,9 +24,13 @@ def generate_launch_description():
     keyboard_controls_node = Node(
         package="sim_node", executable="keyboard_controls.py", output="screen"
     )
+    shm_forwarder = Node(
+        package="sim_node", executable="zero_copy_forwarder", output="screen"
+    )
 
     ld.add_action(sim_launch)
     ld.add_action(keyboard_controls_node)
     ld.add_action(tf_helper_node)
+    ld.add_action(shm_forwarder)
 
     return ld
