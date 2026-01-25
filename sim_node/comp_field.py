@@ -7,13 +7,16 @@ from ament_index_python import get_package_share_directory
 import os
 from sim_node import infantry_robot
 import numpy as np
-from sim_node import infantry_robot
 from mani_skill.agents.multi_agent import MultiAgent
-from mani_skill.sensors.camera import *
+from mani_skill.sensors.camera import (
+    parse_camera_configs,
+    update_camera_configs_from_dict,
+    CameraConfig,
+)
 from mani_skill.sensors.depth_camera import StereoDepthCameraConfig, StereoDepthCamera
 from mani_skill.sensors.camera import Camera
 from mani_skill.utils.structs.render_camera import RenderCamera
-from mani_skill.utils.structs.pose import Pose
+# from mani_skill.utils.structs.pose import Pose
 
 package_dir = get_package_share_directory("sim_node")
 base_field_path = "resource/models/field/"
@@ -42,7 +45,6 @@ urdf_path_and_names = [
 
 @register_env("comp_field")
 class CompFieldEnv(BaseEnv):
-
     def __init__(self, *args, robot_uids=("infantry"), **kwargs):
         super().__init__(*args, robot_uids=robot_uids, **kwargs)
 
@@ -80,7 +82,7 @@ class CompFieldEnv(BaseEnv):
     def _step_action(
         self, action: None | np.ndarray | infantry_robot.Tensor | Dict
     ) -> None | infantry_robot.Tensor:
-        plate_poses = self.agent.agents[0].get_armor_panel_poses()
+        # plate_poses = self.agent.agents[0].get_armor_panel_poses()
 
         # cube = self.scene.actors["debug_cube"]
         # cube.set_pose(plate_poses[3])

@@ -3,17 +3,13 @@ import rclpy
 from rclpy.node import Node
 from tr_messages.srv import WriteSerial, ListenSerial
 from tr_messages.msg import SimTeleopInput, RobotGroundTruth, SimGroundTruth
-from sensor_msgs.msg import Image
 from sim_node import simulation
 
 from sensor_msgs.msg import Image, PointCloud2, PointField
 from std_msgs.msg import Header
 from sensor_msgs_py import point_cloud2  # pointcloud utilizes
 from rosgraph_msgs.msg import Clock
-from tf2_msgs.msg import TFMessage
-from geometry_msgs.msg import TransformStamped
 from sim_node import utils, constants
-import numpy as np
 
 from cv_bridge import CvBridge
 import torch
@@ -294,7 +290,6 @@ class Sim_Node(Node):
         )
 
     def points_to_ros_pointcloud2(self, points):
-
         header = Header()
         # TODO FIX ME
         header.stamp = self.get_clock().now().to_msg()

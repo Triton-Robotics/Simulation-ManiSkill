@@ -1,14 +1,9 @@
 from typing import Dict
 
-import numpy as np
-import sapien.physx as physx
 import torch
-
-from mani_skill.sensors.base_sensor import BaseSensor, BaseSensorConfig
-from mani_skill.sensors.camera import Camera
 from mani_skill.utils import common
 
-from tr_messages.msg import RobotGroundTruth, SimGroundTruth
+from tr_messages.msg import RobotGroundTruth
 from geometry_msgs.msg import Pose
 
 

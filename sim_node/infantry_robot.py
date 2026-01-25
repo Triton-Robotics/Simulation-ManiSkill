@@ -3,7 +3,11 @@ from mani_skill.utils.structs.pose import Pose
 import sapien
 import numpy as np
 from mani_skill.agents.base_agent import BaseAgent, Keyframe
-from mani_skill.agents.controllers import *
+from mani_skill.agents.controllers import (
+    deepcopy_dict,
+    PDJointPosControllerConfig,
+    PDBaseVelControllerConfig,
+)
 from mani_skill.agents.registration import register_agent
 from mani_skill.sensors.camera import CameraConfig
 from torch import Tensor
@@ -19,9 +23,7 @@ package_dir = get_package_share_directory("sim_node")
 @register_agent()
 class InfantryRobot(BaseAgent):
     uid = "infantry"
-    urdf_path = str(
-        os.path.join(package_dir, "resource/models/infantry/infantry.urdf")
-    )
+    urdf_path = str(os.path.join(package_dir, "resource/models/infantry/infantry.urdf"))
 
     # TODO ideally we define a srdf file instead of disabling all collisions. That way we only disable problematic collisions and
     disable_self_collisions = True
@@ -88,7 +90,6 @@ class InfantryRobot(BaseAgent):
 
     @property
     def _controller_configs(self):
-
         pitch_pd_joint = PDJointPosControllerConfig(
             self.pitch_joint_names,
             lower=None,
