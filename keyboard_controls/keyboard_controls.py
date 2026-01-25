@@ -2,7 +2,6 @@ import rclpy
 from rclpy.node import Node
 from tr_messages.msg import SimTeleopInput
 from pynput import keyboard
-import numpy
 from sim_node import constants
 
 

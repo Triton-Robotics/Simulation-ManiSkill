@@ -3,7 +3,11 @@ from mani_skill.utils.structs.pose import Pose
 import sapien
 import numpy as np
 from mani_skill.agents.base_agent import BaseAgent, Keyframe
-from mani_skill.agents.controllers import *
+from mani_skill.agents.controllers import (
+    deepcopy_dict,
+    PDJointPosControllerConfig,
+    PDBaseVelControllerConfig,
+)
 from mani_skill.agents.registration import register_agent
 from mani_skill.sensors.camera import CameraConfig
 from torch import Tensor
@@ -86,7 +90,6 @@ class InfantryRobot(BaseAgent):
 
     @property
     def _controller_configs(self):
-
         pitch_pd_joint = PDJointPosControllerConfig(
             self.pitch_joint_names,
             lower=None,

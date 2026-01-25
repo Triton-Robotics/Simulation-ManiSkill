@@ -1,9 +1,5 @@
 import gymnasium as gym
-import mani_skill.envs
 from mani_skill.envs.sapien_env import BaseEnv
-from mani_skill.agents.base_agent import BaseAgent
-from mani_skill.agents.multi_agent import MultiAgent
-from sim_node import comp_field
 import numpy as np
 from sim_node import utils
 from mani_skill.utils.structs import SimConfig
@@ -21,7 +17,6 @@ SPAWN_SCENARIO_KEYFRAME_MAPPING: dict = dict(
 
 
 class Simulation:
-
     def __init__(self, options: dict, seed=2930):
         self.options = dict(reconfigure=True, user=options)
         self.should_render_gui = self.options["user"]["human_gui"]
@@ -99,7 +94,7 @@ class Simulation:
         }
 
         obs, reward, terminated, truncated, info = self.env.step(action=action)
-        done = terminated or truncated
+        # done = terminated or truncated
         if self.should_render_gui:
             self.env.render()
 
