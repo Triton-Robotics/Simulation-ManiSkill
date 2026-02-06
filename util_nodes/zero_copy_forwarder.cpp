@@ -28,7 +28,7 @@ class ZeroCopyForwarder : public rclcpp::Node {
         void forwardImage(const cv::Mat& img, rclcpp::Time grabbedTimestamp) {
             // Code borrowed from tr-camera-basler/CMyImageHandler.cpp
             curr_ts.tv_sec = grabbedTimestamp.seconds();
-            curr_ts.tv_nsec = grabbedTimestamp.nanoseconds() % 1'000'000'000L;
+            curr_ts.tv_nsec = grabbedTimestamp.nanoseconds(); // % 1'000'000'000L;
 
             if (!sharedImageWriter_->writeImage(img, curr_ts)) {
                 RCLCPP_INFO(this->get_logger(), "Write to shared memory failed.");
@@ -37,7 +37,7 @@ class ZeroCopyForwarder : public rclcpp::Node {
 
         void forwardCallback(const sensor_msgs::msg::Image::ConstSharedPtr &msg) {
             auto img = cv_bridge::toCvShare(msg, "bgr8");
-            rclcpp::Time grabbedTimestamp = msg->header.stamp;
+            rclcpp::Time grabbedTimestamp(msg->header.stamp);
             forwardImage(img->image, grabbedTimestamp);
         }
 };
