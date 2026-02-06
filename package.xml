@@ -23,6 +23,8 @@
 
     <depend>python3-pynput</depend>
 
+    <depend>shm</depend>
+
     <exec_depend>ros2launch</exec_depend>
 
     <export>
