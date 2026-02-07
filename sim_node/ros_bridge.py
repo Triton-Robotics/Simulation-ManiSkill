@@ -2,7 +2,13 @@ import time
 import rclpy
 from rclpy.node import Node
 from tr_messages.srv import WriteSerial, ListenSerial, LidarOdometry
-from tr_messages.msg import SimTeleopInput, RobotGroundTruth, SimGroundTruth, WriteChassis
+from tr_messages.msg import (
+    SimTeleopInput,
+    RobotGroundTruth,
+    SimGroundTruth,
+    WriteChassis,
+    WriteGimbal,
+)
 from sensor_msgs.msg import Image
 from sim_node import simulation
 
@@ -71,6 +77,13 @@ class Sim_Node(Node):
             WriteChassis,
             "write_chassis",
             self.write_chassis_callback,
+            10,
+        )
+
+        self.write_gimbal_sub = self.create_subscription(
+            WriteGimbal,
+            "write_gimbal",
+            self.write_gimbal_callback,
             10,
         )
 
@@ -260,7 +273,7 @@ class Sim_Node(Node):
         # TOOD add angular vel and pitch and yaw vel
         response.x_vel = self.last_recorded_robot_state.x_vel
         response.y_vel = self.last_recorded_robot_state.y_vel
-        response.pitch = self.last_recorded_robot_state.pitch
+        response.pitch = -self.last_recorded_robot_state.pitch
         response.yaw = self.last_recorded_robot_state.yaw
         response.pitch_vel = 0.0
         response.yaw_vel = 0.0
@@ -282,6 +295,16 @@ class Sim_Node(Node):
 
         response.success = True
         return response
+
+    def write_gimbal_callback(self, msg: WriteGimbal):
+        self.control_mode = "programmatic"
+        self.programmatic_desired_robot_state = utils.robot_state(
+            -msg.pitch,
+            msg.yaw,
+            0,
+            0,
+            0,
+        )
 
     # TODO this is monkey tier janky please fix this at some point
     def lidar_odometry_service(self, request, response):
