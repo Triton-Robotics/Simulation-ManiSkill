@@ -78,6 +78,14 @@ def generate_launch_description():
             "use_sim_time",
             default_value="false",
         ),
+        DeclareLaunchArgument(
+            "primary_robot_color",
+            default_value="[0.0, 0.0, 1.0, 1.0]",
+        ),
+        DeclareLaunchArgument(
+            "secondary_robot_color",
+            default_value="[0.0, 0.0, 1.0, 1.0]",
+        )
     ]
 
     node = Node(
@@ -103,6 +111,8 @@ def generate_launch_description():
                     "lidar_pointcloud_resolution"
                 ),
                 "use_sim_time": LaunchConfiguration("use_sim_time"),
+                "primary_robot_color": LaunchConfiguration("primary_robot_color"),
+                "secondary_robot_color": LaunchConfiguration("secondary_robot_color"),
             }
         ],
         output="screen",
