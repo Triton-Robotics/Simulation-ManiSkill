@@ -309,6 +309,8 @@ class Sim_Node(Node):
     # TODO this is monkey tier janky please fix this at some point
     def lidar_odometry_service(self, request, response):
         request_time = request.request_time.sec + request.request_time.nanosec / 1e9
+        # curr_time = self.get_clock().now().seconds_nanoseconds()[0] + self.get_clock().now().seconds_nanoseconds()[1] / 1e9 
+        # self.get_logger().info(f"requested {request_time} | curr: {curr_time}")
 
         closest = self.lidar_pose_queue[0]
         for i in self.lidar_pose_queue:
