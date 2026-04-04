@@ -169,7 +169,14 @@ class InfantryRobot(BaseAgent):
             f_y = height / (2 * np.tan(np.radians(vertical_fov) / 2))
             c_x = width / 2
             c_y = height / 2
-            cv_camera_intrinsics = np.array([[f_x, 0, c_x], [0, f_y, c_y], [0, 0, 1]])
+            # cv_camera_intrinsics = np.array([[f_x, 0, c_x], [0, f_y, c_y], [0, 0, 1]])
+            cv_camera_intrinsics = np.array(
+                [
+                    [3752.1638552162904, 0.0, 955.05751182807444],
+                    [0.0, 3764.8518451196433, 555.76341619680932],
+                    [0.0, 0.0, 1.0],
+                ]
+            )
 
             # taken from Shaders.py in maniskill repo
             cv_texture_names = {
