@@ -25,6 +25,8 @@
 
     <depend>shm</depend>
 
+    <depend>tr_debug</depend>
+
     <exec_depend>ros2launch</exec_depend>
 
     <export>
