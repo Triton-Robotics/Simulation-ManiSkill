@@ -70,7 +70,7 @@ class Simulation:
                 primary_robot_state.y_vel,
             )
             secondary_world_relative_vel = self.head_to_world_vel(
-                "infantry-1",
+                "ellipse_robot-1",
                 secondary_robot_state.x_vel,
                 secondary_robot_state.y_vel,
             )
@@ -108,7 +108,7 @@ class Simulation:
 
         action = {
             "infantry-0": primary_robot_action_batched,
-            "infantry-1": secondary_robot_action_batched,
+            "ellipse_robot-1": secondary_robot_action_batched,
         }
 
         obs, reward, terminated, truncated, info = self.env.step(action=action)
