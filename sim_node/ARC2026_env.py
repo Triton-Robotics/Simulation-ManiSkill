@@ -16,7 +16,15 @@ from mani_skill.utils.structs.render_camera import RenderCamera
 from mani_skill.utils.structs.pose import Pose
 
 from mani_skill.utils.structs.types import SimConfig
+from mani_skill.utils.geometry.rotation_conversions import (
+    euler_angles_to_matrix,
+    matrix_to_quaternion,
+)
+import torch
 from sim_node.infantry_robot import InfantryRobot
+from mani_skill.envs.scene import ManiSkillScene
+
+import sapien.physx as physx
 
 package_dir = get_package_share_directory("sim_node")
 base_field_path = package_dir + "/resource/models/field/"
@@ -39,6 +47,10 @@ field_gltfs = [
     "2026_ARC_3v3_small_barrier_left.gltf",
     "2026_ARC_3v3_small_ramp_left.gltf",
 ]
+
+armor_panel_gltf = (
+    package_dir + "/resource/models/individual_armor_panels/infantry_armor_panel.gltf"
+)
 
 from dataclasses import dataclass
 
@@ -64,7 +76,6 @@ class ARC2026Env(BaseEnv):
         self.field_elements = []
 
         self.arc2026_env_config: ARC2026EnvConfig = kwargs.pop("arc2026_env_config")
-
 
         # TODO one day fix parallel in single scene and how it breaks camera sensors on multi agent
         # self._parallel_in_single_scene = kwargs.get("parallel_in_single_scene", False)
@@ -107,7 +118,106 @@ class ARC2026Env(BaseEnv):
             keyframe=self.arc2026_env_config.robot_keyframes[1],
         )
 
+        # TODO remove this this is for temporary testing
+        rec_robot = self.build_ellipse_robot(self.scene, 0.2, 0.4, armor_panel_gltf)
+
         self.agent = MultiAgent(agents=[primary_agent, secondary_agent])
+
+    # TODO migrate this to ellipse bot
+    def build_ellipse_robot(
+        self,
+        scene: ManiSkillScene,
+        ellipse_a: float,
+        ellipse_b: float,
+        armor_panel_gltf: str,
+        name: str = "ellipse_robot",
+    ) -> physx.PhysxArticulation:
+        builder: sapien.ArticulationBuilder = scene.create_articulation_builder()
+
+        base = builder.create_link_builder()
+        base.set_name(f"{name}_base")
+
+        x_slide = builder.create_link_builder(parent=base)
+        x_slide.set_name(f"{name}_x_slide")
+        x_slide.set_joint_name(f"{name}_x")
+        x_slide.set_joint_properties(
+            type="prismatic",
+            limits=[[-np.inf, np.inf]],
+            pose_in_parent=sapien.Pose(),
+            pose_in_child=sapien.Pose(),
+        )
+
+        y_slide = builder.create_link_builder(parent=x_slide)
+        y_slide.set_name(f"{name}_y_slide")
+        y_slide.set_joint_name(f"{name}_y")
+        y_slide.set_joint_properties(
+            type="prismatic",
+            limits=[[-np.inf, np.inf]],
+            pose_in_parent=sapien.Pose(
+                q=[0.7071068, 0, 0, 0.7071068]
+            ),  # joint X → world Y
+            pose_in_child=sapien.Pose(q=[0.7071068, 0, 0, 0.7071068]),
+        )
+
+        center = builder.create_link_builder(parent=y_slide)
+        center.set_name(f"{name}_center")
+        center.set_joint_name(f"{name}_revolute")
+        center.set_joint_properties(
+            type="revolute",
+            limits=[[-np.inf, np.inf]],
+            pose_in_parent=sapien.Pose(
+                q=[0.7071068, 0, 0.7071068, 0]
+            ),  # joint X → world Z
+            pose_in_child=sapien.Pose(q=[0.7071068, 0, 0.7071068, 0]),
+            friction=0.0,
+            damping=0.1,
+        )
+        center_marker = sapien.render.RenderMaterial()
+        center_marker.set_base_color([0.3, 0.3, 0.3, 1])
+        center.add_box_visual(half_size=[0.05, 0.05, 0.05], material=center_marker)
+
+        for i, theta in enumerate([0, np.pi / 2, np.pi, 3 * np.pi / 2]):
+            x = ellipse_a * np.cos(theta)
+            y = ellipse_b * np.sin(theta)
+
+            panel_link = builder.create_link_builder(parent=center)
+            panel_link.set_name(f"{name}_panel_{i}")
+            panel_link.set_joint_name(f"{name}_fixed_{i}")
+            panel_link.set_joint_properties(
+                type="fixed",
+                limits=[],
+                pose_in_parent=sapien.Pose(p=[x, y, 0]),
+                pose_in_child=sapien.Pose(),
+            )
+
+            # 90° X tilts panel upright; (theta + 90°) Y rotates it to face outward
+            q = matrix_to_quaternion(
+                euler_angles_to_matrix(
+                    torch.tensor(
+                        [[np.pi / 2, theta + np.pi / 2, 0]], dtype=torch.float32
+                    ),
+                    convention="XYZ",
+                )
+            )[0].numpy()
+            panel_link.add_visual_from_file(
+                filename=armor_panel_gltf, pose=sapien.Pose(q=q)
+            )
+
+        builder.set_initial_pose(sapien.Pose(p=[0, 0, 2]))
+        robot = builder.build(fix_root_link=True, name=name)
+
+        for link in robot.links:
+            # TODO this is so jank lmao
+            if link.name == f"{name}_center":
+                continue
+            if not link.render_shapes:
+                continue
+            parts = list(link.render_shapes[0])[0].parts
+            parts[0].material.set_base_color([0, 0, 1, 1])  # light bars -> blue
+            parts[1].material.set_base_color([1, 1, 1, 1])  # symbol     -> white
+            parts[2].material.set_base_color([0, 0, 0, 1])  # main plate -> black
+
+        return robot
 
     def _load_lighting(self, options: dict):
         # self.scene.set_ambient_light([0.05, 0.05, 0.05])
