@@ -22,11 +22,6 @@ armor_panel_gltf_path = (
     package_dir + "/resource/models/individual_armor_panels/infantry_armor_panel.gltf"
 )
 
-# TODO add this as ros params
-_ROBOT_NAME = "ellipse_robot"
-_ELLIPSE_A = 0.2
-_ELLIPSE_B = 0.4
-
 
 @register_agent()
 class EllipseRobot(BaseAgent):
@@ -40,10 +35,15 @@ class EllipseRobot(BaseAgent):
         agent_idx: str | None = None,
         initial_pose: Pose | Pose | None = None,
         build_separate: bool = False,
+        major_axis: float = 0.4,
+        minor_axis: float = 0.2,
         keyframe: str = None,
     ):
 
         self.keyframe = keyframe
+        
+        self.major_axis = major_axis
+        self.minor_axis = minor_axis
 
         super().__init__(
             scene, control_freq, control_mode, agent_idx, initial_pose, build_separate
@@ -81,9 +81,7 @@ class EllipseRobot(BaseAgent):
         super()._after_init()
 
     def _load_articulation(self, initial_pose=None):
-        name = _ROBOT_NAME
-        ellipse_a = _ELLIPSE_A
-        ellipse_b = _ELLIPSE_B
+        name = self.uid
 
         builder: sapien.ArticulationBuilder = self.scene.create_articulation_builder()
 
@@ -130,8 +128,15 @@ class EllipseRobot(BaseAgent):
         center.add_box_visual(half_size=[0.05, 0.05, 0.05], material=center_marker)
 
         for i, theta in enumerate([0, np.pi / 2, np.pi, 3 * np.pi / 2]):
-            x = ellipse_a * np.cos(theta)
-            y = ellipse_b * np.sin(theta)
+            x = self.major_axis * np.cos(theta)
+            y = self.minor_axis * np.sin(theta)
+
+            frame_q = matrix_to_quaternion(
+                euler_angles_to_matrix(
+                    torch.tensor([[np.deg2rad(15) * np.sin(theta), -np.deg2rad(15) * np.cos(theta), theta]], dtype=torch.float32),
+                    convention="XYZ",
+                )
+            )[0].numpy()
 
             panel_link = builder.create_link_builder(parent=center)
             panel_link.set_name(f"{name}_panel_{i}")
@@ -139,21 +144,18 @@ class EllipseRobot(BaseAgent):
             panel_link.set_joint_properties(
                 type="fixed",
                 limits=[],
-                pose_in_parent=sapien.Pose(p=[x, y, 0]),
+                pose_in_parent=sapien.Pose(p=[x, y, 0], q=frame_q),
                 pose_in_child=sapien.Pose(),
             )
 
-            # 90° X tilts panel upright; (theta + 90°) Y rotates it to face outward
-            q = matrix_to_quaternion(
+            visual_q = matrix_to_quaternion(
                 euler_angles_to_matrix(
-                    torch.tensor(
-                        [[np.pi / 2, theta + np.pi / 2, 0]], dtype=torch.float32
-                    ),
+                    torch.tensor([[0, np.pi / 2, np.pi /  2 ]], dtype=torch.float32),
                     convention="XYZ",
                 )
             )[0].numpy()
             panel_link.add_visual_from_file(
-                filename=armor_panel_gltf_path, pose=sapien.Pose(q=q)
+                filename=armor_panel_gltf_path, pose=sapien.Pose(q=visual_q)
             )
 
         # Dummy yaw and pitch links — physically inert (force_limit=0) but give the
@@ -248,7 +250,7 @@ class EllipseRobot(BaseAgent):
         return deepcopy_dict(controller_configs)
 
     def get_armor_panel_poses(self) -> torch.Tensor:
-        name = _ROBOT_NAME
+        name = self.uid
         panel_links = [self.robot.links_map[f"{name}_panel_{i}"] for i in range(4)]
         # Each link.pose.raw_pose is (b, 7); stack to (4, b, 7) then permute to (b, 4, 7)
         panels_stacked = torch.stack([link.pose.raw_pose for link in panel_links])
@@ -256,7 +258,7 @@ class EllipseRobot(BaseAgent):
 
     def get_ground_truth_obs(self) -> dict:
         # The ellipse robot has no turret, camera, or lidar — mock them as chassis pose
-        chassis_pose: Pose = self.robot.links_map[f"{_ROBOT_NAME}_center"].pose
+        chassis_pose: Pose = self.robot.links_map[f"{self.uid}_center"].pose
         return dict(
             chassis_pose=chassis_pose.raw_pose,
             turret_pose=chassis_pose.raw_pose,

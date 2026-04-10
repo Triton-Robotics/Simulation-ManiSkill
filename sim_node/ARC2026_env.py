@@ -116,6 +116,8 @@ class ARC2026Env(BaseEnv):
             control_mode=self._control_mode,
             agent_idx=1,
             initial_pose=sapien.Pose(p=[10, 10, 2]),
+            major_axis=0.4,
+            minor_axis=0.2,
             keyframe=self.arc2026_env_config.robot_keyframes[1],
         )
 
