@@ -41,7 +41,7 @@ class EllipseRobot(BaseAgent):
     ):
 
         self.keyframe = keyframe
-        
+
         self.major_axis = major_axis
         self.minor_axis = minor_axis
 
@@ -133,7 +133,16 @@ class EllipseRobot(BaseAgent):
 
             frame_q = matrix_to_quaternion(
                 euler_angles_to_matrix(
-                    torch.tensor([[np.deg2rad(15) * np.sin(theta), -np.deg2rad(15) * np.cos(theta), theta]], dtype=torch.float32),
+                    torch.tensor(
+                        [
+                            [
+                                np.deg2rad(15) * np.sin(theta),
+                                -np.deg2rad(15) * np.cos(theta),
+                                theta,
+                            ]
+                        ],
+                        dtype=torch.float32,
+                    ),
                     convention="XYZ",
                 )
             )[0].numpy()
@@ -150,7 +159,7 @@ class EllipseRobot(BaseAgent):
 
             visual_q = matrix_to_quaternion(
                 euler_angles_to_matrix(
-                    torch.tensor([[0, np.pi / 2, np.pi /  2 ]], dtype=torch.float32),
+                    torch.tensor([[0, np.pi / 2, np.pi / 2]], dtype=torch.float32),
                     convention="XYZ",
                 )
             )[0].numpy()
@@ -186,7 +195,9 @@ class EllipseRobot(BaseAgent):
 
         pose = initial_pose if initial_pose is not None else sapien.Pose(p=[0, 0, 2])
         builder.set_initial_pose(pose)
-        robot_name = f"{name}-agent-{self._agent_idx}" if self._agent_idx is not None else name
+        robot_name = (
+            f"{name}-agent-{self._agent_idx}" if self._agent_idx is not None else name
+        )
         self.robot = builder.build(fix_root_link=True, name=robot_name)
 
         for link in self.robot.links:
