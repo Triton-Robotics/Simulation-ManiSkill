@@ -195,7 +195,10 @@ class EllipseRobot(BaseAgent):
             if not link.render_shapes:
                 continue
             parts = list(link.render_shapes[0])[0].parts
+            # TODO this is hard coded blue
             parts[0].material.set_base_color([0, 0, 1, 1])  # light bars -> blue
+            parts[0].material.set_emission([0, 0, 100, 50])  # light bar glow
+
             parts[1].material.set_base_color([1, 1, 1, 1])  # symbol     -> white
             parts[2].material.set_base_color([0, 0, 0, 1])  # main plate -> black
 
