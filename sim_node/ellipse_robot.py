@@ -125,7 +125,7 @@ class EllipseRobot(BaseAgent):
         )
         center_marker = sapien.render.RenderMaterial()
         center_marker.set_base_color([0.3, 0.3, 0.3, 1])
-        center.add_box_visual(half_size=[0.05, 0.05, 0.05], material=center_marker)
+        center.add_box_visual(half_size=[self.major_axis-.02, self.minor_axis-.02, 0.05], material=center_marker)
 
         for i, theta in enumerate([0, np.pi / 2, np.pi, 3 * np.pi / 2]):
             x = self.major_axis * np.cos(theta)
