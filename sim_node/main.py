@@ -2,16 +2,19 @@
 
 import sim_node.ros_bridge
 import rclpy
+from rclpy.executors import MultiThreadedExecutor
 
 def main():
     print("running sim node")
     rclpy.init()
-    
+
     node = None
 
     try:
         node = sim_node.ros_bridge.Sim_Node()
-        rclpy.spin(node)
+        executor = MultiThreadedExecutor()
+        executor.add_node(node)
+        executor.spin()
     except KeyboardInterrupt:
         pass
     finally:

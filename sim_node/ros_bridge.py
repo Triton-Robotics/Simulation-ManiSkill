@@ -1,6 +1,7 @@
 import time
 import rclpy
 from rclpy.node import Node
+from rclpy.callback_groups import ReentrantCallbackGroup
 from tr_messages.srv import WriteSerial, ListenSerial, LidarOdometry
 from tr_messages.msg import (
     SimTeleopInput,
@@ -60,17 +61,21 @@ class Sim_Node(Node):
         # self.declare_parameter("parallel_in_single_scene", True)
         # self.declare_parameter("num_envs", 2)
 
+        self.service_cb_group = ReentrantCallbackGroup()
+
         self.primary_robot_teleop_sub = self.create_subscription(
             SimTeleopInput,
             "simulation/primary_robot_teleop",
             self.primary_robot_teleop_callback,
             10,
+            callback_group=self.service_cb_group,
         )
         self.secondary_robot_teleop_sub = self.create_subscription(
             SimTeleopInput,
             "simulation/secondary_robot_teleop",
             self.secondary_robot_teleop_callback,
             10,
+            callback_group=self.service_cb_group,
         )
 
         self.write_chassis_sub = self.create_subscription(
@@ -78,6 +83,7 @@ class Sim_Node(Node):
             "write_chassis",
             self.write_chassis_callback,
             10,
+            callback_group=self.service_cb_group,
         )
 
         self.write_gimbal_sub = self.create_subscription(
@@ -85,16 +91,19 @@ class Sim_Node(Node):
             "write_gimbal",
             self.write_gimbal_callback,
             10,
+            callback_group=self.service_cb_group,
         )
-
         self.write_service = self.create_service(
-            WriteSerial, "write_robot_state", self.write_robot_state
+            WriteSerial, "write_robot_state", self.write_robot_state,
+            callback_group=self.service_cb_group
         )
         self.listen_service = self.create_service(
-            ListenSerial, "read_robot_state", self.read_robot_state
+            ListenSerial, "read_robot_state", self.read_robot_state,
+            callback_group=self.service_cb_group
         )
         self.lidar_odometry_service = self.create_service(
-            LidarOdometry, "lidar_odometry", self.lidar_odometry_service
+            LidarOdometry, "lidar_odometry", self.lidar_odometry_service,
+            callback_group=self.service_cb_group
         )
         self.lidar_pose_queue = []
 
