@@ -8,6 +8,7 @@ from tr_messages.msg import (
     SimGroundTruth,
     WriteChassis,
     WriteGimbal,
+    EmbeddedRobotState
 )
 from sensor_msgs.msg import Image
 from sim_node import simulation
@@ -105,6 +106,7 @@ class Sim_Node(Node):
         qos_profile = rclpy.qos.qos_profile_sensor_data
         qos_profile.depth = 1
         self.image_pub = self.create_publisher(Image, "camera/image", qos_profile)
+        self.robot_state_pub = self.create_publisher(EmbeddedRobotState, "/embedded_robot_state", qos_profile=qos_profile)
 
         control_freq = self.gp("control_freq").integer_value
         sim_time_scale = self.gp("sim_time_scale").double_value
@@ -257,6 +259,16 @@ class Sim_Node(Node):
         sim_ground_truth_msg.total_time = (end - start) * 1000
         sim_ground_truth_msg.theoretical_fps = 1 / (end - start)
         self.ground_truth_pub.publish(sim_ground_truth_msg)
+       
+        # Publish embedded robot state topic 
+        robot_state_msg = EmbeddedRobotState()
+        robot_state_msg.header.stamp = sim_ground_truth_msg.header.stamp
+        robot_state_msg.yaw = robot_state_position[0][3].item()
+        robot_state_msg.pitch = robot_state_position[0][4].item()
+        # TODO fix this apparently robot_state_velocity is broken?? 
+        robot_state_msg.pitch_vel = 0.0
+        robot_state_msg.yaw_vel = 0.0
+        self.robot_state_pub.publish(robot_state_msg)
 
         # lidar odometry service
         lidar_odometry_pos = Pose()
