@@ -337,11 +337,14 @@ class InfantryRobot(BaseAgent):
         chassis_pose: Pose = self.robot.links_map["base_link"].pose * rot
         turret_pose = self.robot.links_map["turret_link"].pose * rot
         camera_pose = self.robot.links_map["camera_link"].pose
-        lidar_pose = self.robot.links_map["lidar_link"].pose
+        lidar_link = self.robot.links_map["lidar_link"]
+        lidar_pose = lidar_link.pose
         return dict(
             chassis_pose=chassis_pose.raw_pose,
             turret_pose=turret_pose.raw_pose,
             camera_pose=camera_pose.raw_pose,
             lidar_pose=lidar_pose.raw_pose,
+            lidar_linear_velocity=lidar_link.linear_velocity,
+            lidar_angular_velocity=lidar_link.angular_velocity,
             panel_poses=self.get_armor_panel_poses(),
         )

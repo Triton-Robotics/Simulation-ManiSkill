@@ -19,6 +19,7 @@ from sensor_msgs_py import point_cloud2  # pointcloud utilizes
 from rosgraph_msgs.msg import Clock
 from tf2_msgs.msg import TFMessage
 from geometry_msgs.msg import TransformStamped, Pose
+from nav_msgs.msg import Odometry
 from sim_node import utils, constants
 import numpy as np
 
@@ -107,6 +108,7 @@ class Sim_Node(Node):
         qos_profile.depth = 1
         self.image_pub = self.create_publisher(Image, "camera/image", qos_profile)
         self.robot_state_pub = self.create_publisher(EmbeddedRobotState, "/embedded_robot_state", qos_profile=qos_profile)
+        self.lidar_pose_pub = self.create_publisher(Odometry, "/lidar_pose", 10)
 
         control_freq = self.gp("control_freq").integer_value
         sim_time_scale = self.gp("sim_time_scale").double_value
@@ -269,6 +271,22 @@ class Sim_Node(Node):
         robot_state_msg.pitch_vel = 0.0
         robot_state_msg.yaw_vel = 0.0
         self.robot_state_pub.publish(robot_state_msg)
+
+        # Publish lidar pose as odometry
+        # pose is in "map" frame; twist is also expressed in "map" (world) frame
+        lidar_odom_msg = Odometry()
+        lidar_odom_msg.header.stamp = sim_ground_truth_msg.header.stamp
+        lidar_odom_msg.header.frame_id = "map"
+        lidar_odom_msg.child_frame_id = "map"
+        utils.populate_pose_msg_from_batched_pose_tensor(
+            lidar_odom_msg.pose.pose, obs["extra"]["primary_robot"]["lidar_pose"]
+        )
+        utils.populate_twist_msg_from_batched_velocity_tensors(
+            lidar_odom_msg.twist.twist,
+            obs["extra"]["primary_robot"]["lidar_linear_velocity"],
+            obs["extra"]["primary_robot"]["lidar_angular_velocity"],
+        )
+        self.lidar_pose_pub.publish(lidar_odom_msg)
 
         # lidar odometry service
         lidar_odometry_pos = Pose()

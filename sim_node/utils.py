@@ -9,7 +9,7 @@ from mani_skill.sensors.camera import Camera
 from mani_skill.utils import common
 
 from tr_messages.msg import RobotGroundTruth, SimGroundTruth
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Pose, Twist
 
 
 class robot_state:
@@ -116,3 +116,20 @@ def populate_pose_msg_from_batched_pose_tensor(
     msg.orientation.x = poses_tensor[0][4].item()
     msg.orientation.y = poses_tensor[0][5].item()
     msg.orientation.z = poses_tensor[0][6].item()
+
+
+def populate_twist_msg_from_batched_velocity_tensors(
+    msg: Twist,
+    linear_velocity: torch.Tensor,
+    angular_velocity: torch.Tensor,
+) -> None:
+    # Velocities from SAPIEN are in world frame (shape [N, 3]).
+    # We publish them as-is; the Odometry child_frame_id must be set to "map"
+    # so that the expressed frame matches per the nav_msgs/Odometry convention.
+    msg.linear.x = linear_velocity[0][0].item()
+    msg.linear.y = linear_velocity[0][1].item()
+    msg.linear.z = linear_velocity[0][2].item()
+
+    msg.angular.x = angular_velocity[0][0].item()
+    msg.angular.y = angular_velocity[0][1].item()
+    msg.angular.z = angular_velocity[0][2].item()
