@@ -108,7 +108,7 @@ class Sim_Node(Node):
         qos_profile.depth = 1
         self.image_pub = self.create_publisher(Image, "camera/image", qos_profile)
         self.robot_state_pub = self.create_publisher(EmbeddedRobotState, "/embedded_robot_state", qos_profile=qos_profile)
-        self.lidar_pose_pub = self.create_publisher(Odometry, "/lidar_pose", 10)
+        self.lidar_pose_pub = self.create_publisher(Odometry, "/odin1/odometry_highfreq", 10)
 
         control_freq = self.gp("control_freq").integer_value
         sim_time_scale = self.gp("sim_time_scale").double_value
