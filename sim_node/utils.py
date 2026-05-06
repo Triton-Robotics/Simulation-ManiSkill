@@ -15,30 +15,42 @@ from geometry_msgs.msg import Pose, Twist
 class robot_state:
     def __init__(
         self,
-        pitch: float = 0,
-        yaw: float = 0,
         x_vel: float = 0,
         y_vel: float = 0,
-        angular_vel: float = 0,
+        z_vel: float = 0,
+        roll_vel: float = 0,
+        pitch_vel: float = 0,
+        yaw_vel: float = 0,
+        turret_yaw: float = 0,
+        turret_pitch: float = 0,
+
     ) -> None:
-        self.pitch = pitch
-        self.yaw = yaw
         self.x_vel = x_vel
         self.y_vel = y_vel
-        self.angular_vel = angular_vel
+        self.z_vel = z_vel
+        self.roll_vel = roll_vel
+        self.pitch_vel = pitch_vel
+        self.yaw_vel = yaw_vel
+        self.turret_yaw = turret_yaw
+        self.turret_pitch = turret_pitch
 
     def __eq__(self, value: object) -> bool:
         return (
-            self.pitch == value.pitch
-            and self.yaw == value.yaw
-            and self.x_vel == value.x_vel
+            self.x_vel == value.x_vel
             and self.y_vel == value.y_vel
-            and self.angular_vel == value.angular_vel
+            and self.z_vel == value.z_vel
+            and self.roll_vel == value.roll_vel
+            and self.pitch_vel == value.pitch_vel
+            and self.yaw_vel == value.yaw_vel
+            and self.turret_yaw == value.turret_yaw
+            and self.turret_pitch == value.turret_pitch
         )
-
+    
     def __str__(self) -> str:
         return (
-            f"{self.x_vel}, {self.y_vel}, {self.angular_vel}, {self.pitch}, {self.yaw}"
+            f"x:{self.x_vel} y:{self.y_vel} z:{self.z_vel} "
+            f"roll:{self.roll_vel} pitch:{self.pitch_vel} yaw:{self.yaw_vel} "
+            f"turret_yaw:{self.turret_yaw} turret_pitch:{self.turret_pitch}"
         )
 
 

@@ -82,9 +82,9 @@ class Simulation:
             [
                 primary_world_relative_vel[0],
                 primary_world_relative_vel[1],
-                primary_robot_state.angular_vel,
-                primary_robot_state.yaw,
-                primary_robot_state.pitch,
+                primary_robot_state.yaw_vel,      # was angular_vel
+                primary_robot_state.turret_yaw,   # was yaw
+                primary_robot_state.turret_pitch, # was pitch
             ],
             dtype=torch.float32,
         )
@@ -92,9 +92,12 @@ class Simulation:
             [
                 secondary_world_relative_vel[0],
                 secondary_world_relative_vel[1],
-                secondary_robot_state.angular_vel,
-                secondary_robot_state.yaw,
-                secondary_robot_state.pitch,
+                secondary_robot_state.z_vel,
+                secondary_robot_state.yaw_vel,      # Chassis_revolute
+                secondary_robot_state.roll_vel,     # was roll
+                secondary_robot_state.pitch_vel,    # was pitch
+                secondary_robot_state.turret_yaw,   # was yaw (stays 0 for ellipse)
+                secondary_robot_state.turret_pitch, # was pitch (stays 0 for ellipse)
             ],
             dtype=torch.float32,
         )
@@ -114,15 +117,20 @@ class Simulation:
         obs, reward, terminated, truncated, info = self.env.step(action=action)
         if self.human_gui_enabled:
             self.env.render()
-
         self.past_obs = obs
+        print(f"ellipse qpos: {self.past_obs['agent']['ellipse_robot-1']['qpos'][0]}")
+
         return obs
 
     def shutdown(self):
         self.env.close()
 
     def head_to_world_vel(self, robot: str, x_vel, y_vel):
-        yaw_rads = self.past_obs["agent"][robot]["qpos"][0][3].item()
+        if "ellipse" in robot:
+            yaw_idx = 5
+        else:
+            yaw_idx = 2
+        yaw_rads = self.past_obs["agent"][robot]["qpos"][0][yaw_idx].item()
         rotation_matrix = np.array(
             [
                 [np.cos(yaw_rads), -np.sin(yaw_rads)],

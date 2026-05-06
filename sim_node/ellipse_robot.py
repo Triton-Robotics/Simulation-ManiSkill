@@ -37,6 +37,9 @@ class EllipseRobot(BaseAgent):
         build_separate: bool = False,
         major_axis: float = 0.4,
         minor_axis: float = 0.2,
+        #Add variables for panel heights, 1 for each opposing panels
+        major_axis_panel_offset: float = 1.0,
+        minor_axis_panel_offset: float = 0.5,
         keyframe: str = None,
     ):
 
@@ -44,6 +47,8 @@ class EllipseRobot(BaseAgent):
 
         self.major_axis = major_axis
         self.minor_axis = minor_axis
+        self.major_axis_panel_offset = major_axis_panel_offset
+        self.minor_axis_panel_offset = minor_axis_panel_offset
 
         super().__init__(
             scene, control_freq, control_mode, agent_idx, initial_pose, build_separate
@@ -63,7 +68,10 @@ class EllipseRobot(BaseAgent):
     base_joint_names = [
         f"chassis_x_axis",
         f"chassis_y_axis",
+        f"chassis_z_axis",
         f"chassis_revolute",
+        f"chassis_roll",
+        f"chassis_pitch",
     ]
     # Dummy joints — accepted in action space to match infantry robot interface but physically inert
     yaw_joint_names = ["yaw"]
@@ -110,7 +118,46 @@ class EllipseRobot(BaseAgent):
             pose_in_child=sapien.Pose(q=[0.7071068, 0, 0, 0.7071068]),
         )
 
-        center = builder.create_link_builder(parent=y_slide)
+        z_slide = builder.create_link_builder(parent=y_slide)
+        z_slide.set_name(f"{name}_z_slide")
+        z_slide.set_joint_name("chassis_z_axis")
+        z_slide.set_joint_properties(
+            type="prismatic",
+            limits=[[-1.0, 1.0]],
+            pose_in_parent=sapien.Pose(q=[0.7071068, 0, 0.7071068, 0]),
+            pose_in_child=sapien.Pose(q=[0.7071068, 0, 0.7071068, 0]),
+            friction=0.0,
+            damping=10.0,
+        )
+        roll_link = builder.create_link_builder(parent=z_slide)
+        roll_link.set_name(f"{name}_roll")
+        roll_link.set_joint_name("chassis_roll")
+        roll_link.set_joint_properties(
+            type="revolute",
+            limits=[[-np.deg2rad(30), np.deg2rad(30)]],  # ±30 degrees max roll
+            pose_in_parent=sapien.Pose(),  # joint X axis = world X = roll axis
+            pose_in_child=sapien.Pose(),
+            friction=0.0,
+            damping=1.0,
+        )
+
+        pitch_link = builder.create_link_builder(parent=roll_link)
+        pitch_link.set_name(f"{name}_pitch")
+        pitch_link.set_joint_name("chassis_pitch")
+        pitch_link.set_joint_properties(
+            type="revolute",
+            limits=[[-np.deg2rad(30), np.deg2rad(30)]],  # ±30 degrees max pitch
+            pose_in_parent=sapien.Pose(
+                q=[0.7071068, 0, 0, 0.7071068]  # rotate joint axis to world Y
+            ),
+            pose_in_child=sapien.Pose(
+                q=[0.7071068, 0, 0, 0.7071068]
+            ),
+            friction=0.0,
+            damping=1.0,
+        )
+
+        center = builder.create_link_builder(parent=pitch_link)
         center.set_name(f"{name}_center")
         center.set_joint_name(f"chassis_revolute")
         center.set_joint_properties(
@@ -126,7 +173,7 @@ class EllipseRobot(BaseAgent):
         center_marker = sapien.render.RenderMaterial()
         center_marker.set_base_color([0.3, 0.3, 0.3, 1])
         center.add_box_visual(half_size=[self.major_axis-.02, self.minor_axis-.02, 0.05], material=center_marker)
-
+        center.add_box_collision(half_size=[self.major_axis-.02, self.minor_axis-.02, 0.05])
         for i, theta in enumerate([0, np.pi / 2, np.pi, 3 * np.pi / 2]):
             x = self.major_axis * np.cos(theta)
             y = self.minor_axis * np.sin(theta)
@@ -146,6 +193,10 @@ class EllipseRobot(BaseAgent):
                     convention="XYZ",
                 )
             )[0].numpy()
+            if i % 2 == 0:
+                z_offset = self.major_axis_panel_offset
+            else:
+                z_offset = self.minor_axis_panel_offset
 
             panel_link = builder.create_link_builder(parent=center)
             panel_link.set_name(f"{name}_panel_{i}")
@@ -153,7 +204,8 @@ class EllipseRobot(BaseAgent):
             panel_link.set_joint_properties(
                 type="fixed",
                 limits=[],
-                pose_in_parent=sapien.Pose(p=[x, y, 0], q=frame_q),
+                # 
+                pose_in_parent=sapien.Pose(p=[x, y, z_offset], q=frame_q),
                 pose_in_child=sapien.Pose(),
             )
 
@@ -220,16 +272,24 @@ class EllipseRobot(BaseAgent):
             lower=[
                 -constants.MAX_TRANSLATION_VEL_M_S,
                 -constants.MAX_TRANSLATION_VEL_M_S,
+                -constants.MAX_TRANSLATION_VEL_M_S,
                 -constants.MAX_ANGULAR_VEL_RADS_S,
+                -constants.MAX_ANGULAR_VEL_RADS_S,
+                -constants.MAX_ANGULAR_VEL_RADS_S,
+
             ],
             upper=[
                 constants.MAX_TRANSLATION_VEL_M_S,
                 constants.MAX_TRANSLATION_VEL_M_S,
+                constants.MAX_TRANSLATION_VEL_M_S,
+                constants.MAX_ANGULAR_VEL_RADS_S,
+                constants.MAX_ANGULAR_VEL_RADS_S,
                 constants.MAX_ANGULAR_VEL_RADS_S,
             ],
             damping=1000,
             force_limit=500,
         )
+        # here you add the controller for revolve around x and y axis
 
         # Dummy controllers — consume yaw/pitch action dims but apply zero force,
         # keeping the action space identical to InfantryRobot.
@@ -271,12 +331,15 @@ class EllipseRobot(BaseAgent):
         return panels_stacked.permute(1, 0, 2)
 
     def get_ground_truth_obs(self) -> dict:
-        # The ellipse robot has no turret, camera, or lidar — mock them as chassis pose
         chassis_pose: Pose = self.robot.links_map[f"{self.uid}_center"].pose
+        roll_link_pose = self.robot.links_map[f"{self.uid}_roll"].pose
+        pitch_link_pose = self.robot.links_map[f"{self.uid}_pitch"].pose
         return dict(
             chassis_pose=chassis_pose.raw_pose,
             turret_pose=chassis_pose.raw_pose,
             camera_pose=chassis_pose.raw_pose,
             lidar_pose=chassis_pose.raw_pose,
             panel_poses=self.get_armor_panel_poses(),
+            roll_pose=roll_link_pose.raw_pose,    # ← new
+            pitch_pose=pitch_link_pose.raw_pose,  # ← new
         )

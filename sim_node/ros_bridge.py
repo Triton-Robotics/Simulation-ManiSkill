@@ -8,7 +8,8 @@ from tr_messages.msg import (
     SimGroundTruth,
     WriteChassis,
     WriteGimbal,
-    EmbeddedRobotState
+    EmbeddedRobotState,
+    ChassisControl,
 )
 from sensor_msgs.msg import Image
 from sim_node import simulation
@@ -63,13 +64,13 @@ class Sim_Node(Node):
         # self.declare_parameter("num_envs", 2)
 
         self.primary_robot_teleop_sub = self.create_subscription(
-            SimTeleopInput,
+            ChassisControl,
             "simulation/primary_robot_teleop",
             self.primary_robot_teleop_callback,
             10,
         )
         self.secondary_robot_teleop_sub = self.create_subscription(
-            SimTeleopInput,
+            ChassisControl,
             "simulation/secondary_robot_teleop",
             self.secondary_robot_teleop_callback,
             10,
@@ -195,9 +196,9 @@ class Sim_Node(Node):
         self.last_recorded_robot_state = utils.robot_state(
             x_vel=robot_state_velocity[0][0].item(),
             y_vel=robot_state_velocity[0][1].item(),
-            angular_vel=robot_state_velocity[0][2].item(),
-            yaw=robot_state_position[0][3].item(),
-            pitch=robot_state_position[0][4].item(),
+            yaw_vel=robot_state_velocity[0][2].item(),
+            turret_yaw=robot_state_position[0][3].item(),
+            turret_pitch=robot_state_position[0][4].item(),
         )
 
         if self.get_parameter("enable_cv_cam").get_parameter_value().bool_value:
@@ -372,11 +373,11 @@ class Sim_Node(Node):
     def primary_robot_teleop_callback(self, msg):
         received_state = utils.robot_state(
             # pitch is negated so negative pitch means down
-            pitch=-msg.pitch,
-            yaw=msg.yaw,
+            turret_pitch=-msg.turret_pitch,
+            turret_yaw=msg.turret_yaw,
             x_vel=msg.x_vel / constants.MAX_TRANSLATION_VEL_M_S,
             y_vel=msg.y_vel / constants.MAX_TRANSLATION_VEL_M_S,
-            angular_vel=msg.angular_vel / constants.MAX_ANGULAR_VEL_RADS_S,
+            yaw_vel=msg.yaw_vel / constants.MAX_ANGULAR_VEL_RADS_S,
         )
 
         if received_state != self.teleop_desired_robot_state:
@@ -385,11 +386,12 @@ class Sim_Node(Node):
 
     def secondary_robot_teleop_callback(self, msg):
         self.secondary_robot_teleop_desired_state = utils.robot_state(
-            pitch=0,
-            yaw=0,
             x_vel=msg.x_vel / constants.MAX_TRANSLATION_VEL_M_S,
             y_vel=msg.y_vel / constants.MAX_TRANSLATION_VEL_M_S,
-            angular_vel=msg.angular_vel / constants.MAX_ANGULAR_VEL_RADS_S,
+            z_vel=msg.z_vel / constants.MAX_TRANSLATION_VEL_M_S,
+            yaw_vel=msg.yaw_vel / constants.MAX_ANGULAR_VEL_RADS_S,
+            roll_vel=msg.roll_vel / constants.MAX_ANGULAR_VEL_RADS_S,
+            pitch_vel=msg.pitch_vel / constants.MAX_ANGULAR_VEL_RADS_S,
         )
 
     def points_to_ros_pointcloud2(self, points):
